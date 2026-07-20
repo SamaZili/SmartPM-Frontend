@@ -41,4 +41,26 @@ export const post = async <T, D = unknown>(url: string, data?: D, config?: Axios
   }
 };
 
+// 5. Fonction PUT générique et strictement typée (NOUVELLE)
+export const put = async <T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+  try {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.put(url, data, config);
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<T>>;
+    throw new Error(axiosError.response?.data?.message || 'Une erreur est survenue lors de la requête PUT');
+  }
+};
+
+// 6. Fonction DELETE générique et strictement typée (NOUVELLE)
+export const del = async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+  try {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.delete(url, config);
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<T>>;
+    throw new Error(axiosError.response?.data?.message || 'Une erreur est survenue lors de la requête DELETE');
+  }
+};
+
 export default apiClient;
