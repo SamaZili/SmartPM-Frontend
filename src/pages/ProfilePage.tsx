@@ -11,11 +11,6 @@ const ProfilePage: React.FC = () => {
     email: '',
     type: 'chef_de_projet',
   });
-  const [passwordData, setPasswordData] = useState({
-    current_password: '',
-    new_password: '',
-    new_password_confirmation: '',
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -35,7 +30,7 @@ const ProfilePage: React.FC = () => {
           type: response.data.user.type,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Impossible de charger le profil.');
     }
   };
@@ -54,35 +49,6 @@ const ProfilePage: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors de la mise à jour.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordData.new_password !== passwordData.new_password_confirmation) {
-      setError('Les mots de passe ne correspondent pas.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      // Note: Tu devras créer cette route dans ton backend si elle n'existe pas
-      const response = await put('/profile/password', {
-        current_password: passwordData.current_password,
-        new_password: passwordData.new_password,
-      });
-      
-      if (response.success) {
-        setSuccessMsg('Mot de passe changé avec succès !');
-        setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
-        setTimeout(() => setSuccessMsg(''), 3000);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe.');
     } finally {
       setIsLoading(false);
     }
@@ -110,128 +76,183 @@ const ProfilePage: React.FC = () => {
     <div style={{ 
       minHeight: '100vh', 
       backgroundColor: '#f8fafc',
-      display: 'flex'
+      display: 'flex',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       {/* Sidebar */}
       <div style={{ 
-        width: '250px', 
+        width: '260px', 
         backgroundColor: 'white', 
         borderRight: '1px solid #e2e8f0',
-        padding: '1.5rem'
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ color: '#10b981', fontSize: '1.5rem', margin: 0 }}>🏗️ SmartPM</h1>
+        <div style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            backgroundColor: '#10b981', 
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '1.5rem',
+            fontWeight: 'bold'
+          }}>
+            ️
+          </div>
+          <h1 style={{ color: '#10b981', fontSize: '1.5rem', margin: 0, fontWeight: '700' }}>SmartPM</h1>
         </div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
           <button 
             onClick={() => navigate('/dashboard')}
             style={{ 
-              padding: '0.75rem 1rem', 
+              padding: '0.875rem 1rem', 
               backgroundColor: 'transparent', 
               color: '#64748b', 
               border: 'none', 
-              borderRadius: '6px',
+              borderRadius: '8px',
               textAlign: 'left',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
             }}
           >
-            📊 Tableau de bord
+            <span>📊</span> Tableau de bord
           </button>
           <button 
             onClick={() => navigate('/projects')}
             style={{ 
-              padding: '0.75rem 1rem', 
+              padding: '0.875rem 1rem', 
               backgroundColor: 'transparent', 
               color: '#64748b', 
               border: 'none', 
-              borderRadius: '6px',
+              borderRadius: '8px',
               textAlign: 'left',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
             }}
           >
-            📁 Projets
+            <span>📁</span> Projets
           </button>
           <button 
             onClick={() => navigate('/tasks')}
             style={{ 
-              padding: '0.75rem 1rem', 
+              padding: '0.875rem 1rem', 
               backgroundColor: 'transparent', 
               color: '#64748b', 
               border: 'none', 
-              borderRadius: '6px',
+              borderRadius: '8px',
               textAlign: 'left',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
             }}
           >
-            ✅ Tâches
+            <span>✅</span> Tâches
           </button>
           <button 
             style={{ 
-              padding: '0.75rem 1rem', 
+              padding: '0.875rem 1rem', 
               backgroundColor: '#f0fdf4', 
               color: '#166534', 
               border: 'none', 
-              borderRadius: '6px',
+              borderRadius: '8px',
               textAlign: 'left',
               cursor: 'pointer',
-              fontWeight: '600'
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
             }}
           >
-            👤 Profil
+            <span></span> Profil
           </button>
         </nav>
-        <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid #e2e8f0' }}>
+
+        <div style={{ 
+          marginTop: 'auto', 
+          paddingTop: '1.5rem', 
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            backgroundColor: '#10b981', 
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: 'bold'
+          }}>
+            {user ? getInitials(user.name) : 'ML'}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '0.875rem' }}>{user?.name || 'Admin'}</p>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '0.75rem' }}>{getTypeLabel(user?.type || 'chef_de_projet')}</p>
+          </div>
           <button onClick={handleLogout} style={{ 
-            width: '100%',
             padding: '0.5rem', 
             backgroundColor: '#ef4444', 
             color: 'white', 
             border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer'
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '0.875rem'
           }}>
-            Se déconnecter
+            Déconnexion
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '2rem' }}>
+      <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ color: '#1e293b', margin: 0 }}>Profil</h2>
+          <h2 style={{ color: '#1e293b', margin: 0, fontSize: '1.875rem', fontWeight: '700' }}>Profil</h2>
         </div>
 
-        {error && <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '1rem', borderRadius: '6px', marginBottom: '1rem' }}>{error}</div>}
-        {successMsg && <div style={{ color: '#166534', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '6px', marginBottom: '1rem' }}>{successMsg}</div>}
+        {error && <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{error}</div>}
+        {successMsg && <div style={{ color: '#166534', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>{successMsg}</div>}
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
           {/* Profile Info */}
           <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
               <div style={{ 
-                width: '80px', 
-                height: '80px', 
+                width: '100px', 
+                height: '100px', 
                 backgroundColor: '#10b981', 
                 borderRadius: '50%', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                marginRight: '1rem'
+                marginRight: '1.5rem'
               }}>
-                <span style={{ color: 'white', fontSize: '2rem', fontWeight: 'bold' }}>
+                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: 'bold' }}>
                   {user ? getInitials(user.name) : 'ML'}
                 </span>
               </div>
               <div>
-                <h3 style={{ margin: 0, color: '#1e293b' }}>{user?.name || 'Marc Lefebvre'}</h3>
-                <p style={{ margin: '0.25rem 0 0', color: '#64748b' }}>{getTypeLabel(user?.type || 'chef_de_projet')}</p>
+                <h3 style={{ margin: 0, color: '#1e293b', fontSize: '1.5rem', fontWeight: '600' }}>{user?.name || 'Marc Lefebvre'}</h3>
+                <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '1rem' }}>{getTypeLabel(user?.type || 'chef_de_projet')}</p>
               </div>
             </div>
 
             <form onSubmit={handleUpdateProfile}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem', fontWeight: '500' }}>
                     Nom complet
                   </label>
                   <input
@@ -240,15 +261,16 @@ const ProfilePage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={{ 
                       width: '100%', 
-                      padding: '0.75rem', 
+                      padding: '0.875rem', 
                       border: '1px solid #e2e8f0', 
-                      borderRadius: '6px',
-                      boxSizing: 'border-box'
+                      borderRadius: '8px',
+                      boxSizing: 'border-box',
+                      fontSize: '1rem'
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem', fontWeight: '500' }}>
                     Adresse e-mail
                   </label>
                   <input
@@ -257,15 +279,16 @@ const ProfilePage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     style={{ 
                       width: '100%', 
-                      padding: '0.75rem', 
+                      padding: '0.875rem', 
                       border: '1px solid #e2e8f0', 
-                      borderRadius: '6px',
-                      boxSizing: 'border-box'
+                      borderRadius: '8px',
+                      boxSizing: 'border-box',
+                      fontSize: '1rem'
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem', fontWeight: '500' }}>
                     Rôle
                   </label>
                   <input
@@ -274,16 +297,17 @@ const ProfilePage: React.FC = () => {
                     disabled
                     style={{ 
                       width: '100%', 
-                      padding: '0.75rem', 
+                      padding: '0.875rem', 
                       border: '1px solid #e2e8f0', 
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       backgroundColor: '#f8fafc',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      fontSize: '1rem'
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem', fontWeight: '500' }}>
                     Fuseau horaire
                   </label>
                   <input
@@ -292,11 +316,12 @@ const ProfilePage: React.FC = () => {
                     disabled
                     style={{ 
                       width: '100%', 
-                      padding: '0.75rem', 
+                      padding: '0.875rem', 
                       border: '1px solid #e2e8f0', 
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       backgroundColor: '#f8fafc',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      fontSize: '1rem'
                     }}
                   />
                 </div>
@@ -305,13 +330,14 @@ const ProfilePage: React.FC = () => {
                 <button 
                   type="button"
                   style={{ 
-                    padding: '0.75rem 1.5rem', 
+                    padding: '0.875rem 1.5rem', 
                     backgroundColor: '#f1f5f9', 
                     color: '#64748b', 
                     border: 'none', 
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    marginRight: '0.5rem'
+                    marginRight: '0.5rem',
+                    fontWeight: '600'
                   }}
                 >
                   Annuler
@@ -320,11 +346,11 @@ const ProfilePage: React.FC = () => {
                   type="submit"
                   disabled={isLoading}
                   style={{ 
-                    padding: '0.75rem 1.5rem', 
+                    padding: '0.875rem 1.5rem', 
                     backgroundColor: isLoading ? '#94a3b8' : '#10b981', 
                     color: 'white', 
                     border: 'none', 
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     cursor: isLoading ? 'not-allowed' : 'pointer',
                     fontWeight: '600'
                   }}
@@ -337,135 +363,65 @@ const ProfilePage: React.FC = () => {
 
           {/* Activity Stats */}
           <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: 'fit-content' }}>
-            <h4 style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.875rem', textTransform: 'uppercase' }}>
+            <h4 style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.875rem', textTransform: 'uppercase', fontWeight: '600' }}>
               ACTIVITÉ
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>Projets pilotés</span>
-                <strong style={{ color: '#1e293b' }}>5</strong>
+                <strong style={{ color: '#1e293b', fontSize: '1.125rem' }}>5</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>Tâches assignées</span>
-                <strong style={{ color: '#1e293b' }}>1</strong>
+                <strong style={{ color: '#1e293b', fontSize: '1.125rem' }}>1</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>Estimations lancées</span>
-                <strong style={{ color: '#1e293b' }}>14</strong>
+                <strong style={{ color: '#1e293b', fontSize: '1.125rem' }}>14</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#64748b' }}>Précision moyenne</span>
-                <strong style={{ color: '#1e293b' }}>92%</strong>
+                <strong style={{ color: '#1e293b', fontSize: '1.125rem' }}>92%</strong>
               </div>
             </div>
 
             {/* AI Preferences */}
             <div style={{ 
-              marginTop: '1.5rem', 
+              marginTop: '2rem', 
               backgroundColor: '#1e293b', 
               color: 'white', 
               padding: '1.5rem', 
               borderRadius: '8px' 
             }}>
-              <h5 style={{ margin: '0 0 0.75rem 0', fontSize: '0.875rem', textTransform: 'uppercase', color: '#94a3b8' }}>
+              <h5 style={{ margin: '0 0 0.75rem 0', fontSize: '0.875rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: '600' }}>
                 PRÉFÉRENCES IA
               </h5>
-              <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', lineHeight: '1.6' }}>
                 Les estimations utilisent votre historique. Vous pouvez les désactiver à tout moment.
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.875rem' }}>Suggestions automatiques</span>
                 <div style={{ 
-                  width: '40px', 
-                  height: '20px', 
+                  width: '44px', 
+                  height: '24px', 
                   backgroundColor: '#10b981', 
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   position: 'relative',
                   cursor: 'pointer'
                 }}>
                   <div style={{ 
-                    width: '16px', 
-                    height: '16px', 
+                    width: '18px', 
+                    height: '18px', 
                     backgroundColor: 'white', 
                     borderRadius: '50%',
                     position: 'absolute',
-                    top: '2px',
-                    right: '2px'
+                    top: '3px',
+                    right: '3px'
                   }} />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Security Section */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          padding: '2rem', 
-          borderRadius: '12px', 
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          marginTop: '2rem'
-        }}>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>Sécurité</h3>
-          <p style={{ margin: '0 0 1.5rem 0', color: '#64748b', fontSize: '0.875rem' }}>
-            Modifiez votre mot de passe régulièrement pour sécuriser votre compte.
-          </p>
-          
-          <form onSubmit={handleChangePassword}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
-                  Nouveau mot de passe
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.new_password}
-                  onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
-                  style={{ 
-                    width: '100%', 
-                    padding: '0.75rem', 
-                    border: '1px solid #e2e8f0', 
-                    borderRadius: '6px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontSize: '0.875rem' }}>
-                  Confirmation
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.new_password_confirmation}
-                  onChange={(e) => setPasswordData({ ...passwordData, new_password_confirmation: e.target.value })}
-                  style={{ 
-                    width: '100%', 
-                    padding: '0.75rem', 
-                    border: '1px solid #e2e8f0', 
-                    borderRadius: '6px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
-              <button 
-                type="submit"
-                disabled={isLoading}
-                style={{ 
-                  padding: '0.75rem 1.5rem', 
-                  backgroundColor: isLoading ? '#94a3b8' : '#10b981', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '6px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontWeight: '600'
-                }}
-              >
-                Changer le mot de passe
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>

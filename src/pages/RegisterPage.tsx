@@ -66,39 +66,55 @@ const RegisterPage: React.FC = () => {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      backgroundColor: '#f8fafc'
+      backgroundColor: '#f8fafc',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <div style={{ 
         width: '100%', 
-        maxWidth: '500px', 
+        maxWidth: '480px', 
         padding: '2rem' 
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: '#10b981', fontSize: '2rem', margin: '0 0 0.5rem 0' }}>🏗️ SmartPM</h1>
-          <p style={{ color: '#64748b', margin: 0 }}>Créez votre compte</p>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ 
+            width: '64px', 
+            height: '64px', 
+            backgroundColor: '#10b981', 
+            borderRadius: '16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '2.5rem',
+            marginBottom: '1rem'
+          }}>
+            🏗️
+          </div>
+          <h1 style={{ color: '#10b981', fontSize: '2rem', margin: '0 0 0.5rem 0', fontWeight: '700' }}>SmartPM</h1>
+          <p style={{ color: '#64748b', margin: 0, fontSize: '1rem' }}>Créez votre compte</p>
         </div>
 
         <div style={{ 
           backgroundColor: 'white', 
-          padding: '2rem', 
-          borderRadius: '12px', 
+          padding: '2.5rem', 
+          borderRadius: '16px', 
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }}>
           {error && (
             <div style={{ 
               color: '#dc2626', 
               backgroundColor: '#fef2f2', 
-              padding: '0.75rem', 
-              borderRadius: '6px', 
-              marginBottom: '1rem' 
+              padding: '1rem', 
+              borderRadius: '8px', 
+              marginBottom: '1.5rem',
+              border: '1px solid #fecaca'
             }}>
               {error}
             </div>
           )}
           
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
                 Nom complet
               </label>
               <input
@@ -111,16 +127,17 @@ const RegisterPage: React.FC = () => {
                 disabled={isLoading}
                 style={{ 
                   width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '6px', 
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
+                  padding: '0.875rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '1rem'
                 }}
               />
             </div>
             
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
                 Adresse e-mail
               </label>
               <input
@@ -133,16 +150,17 @@ const RegisterPage: React.FC = () => {
                 disabled={isLoading}
                 style={{ 
                   width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '6px', 
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
+                  padding: '0.875rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '1rem'
                 }}
               />
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="type" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="type" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
                 Rôle
               </label>
               <select
@@ -154,10 +172,11 @@ const RegisterPage: React.FC = () => {
                 disabled={isLoading}
                 style={{ 
                   width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '6px', 
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
+                  padding: '0.875rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '1rem'
                 }}
               >
                 <option value="chef_de_projet">Chef de projet</option>
@@ -165,8 +184,8 @@ const RegisterPage: React.FC = () => {
               </select>
             </div>
             
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
                 Mot de passe
               </label>
               <input
@@ -179,16 +198,17 @@ const RegisterPage: React.FC = () => {
                 disabled={isLoading}
                 style={{ 
                   width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '6px', 
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
+                  padding: '0.875rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '1rem'
                 }}
               />
             </div>
             
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="password_confirmation" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151' }}>
+            <div style={{ marginBottom: '2rem' }}>
+              <label htmlFor="password_confirmation" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.875rem' }}>
                 Confirmation du mot de passe
               </label>
               <input
@@ -201,10 +221,11 @@ const RegisterPage: React.FC = () => {
                 disabled={isLoading}
                 style={{ 
                   width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '6px', 
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
+                  padding: '0.875rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '1rem'
                 }}
               />
             </div>
@@ -214,11 +235,11 @@ const RegisterPage: React.FC = () => {
               disabled={isLoading}
               style={{ 
                 width: '100%', 
-                padding: '0.875rem', 
+                padding: '1rem', 
                 backgroundColor: isLoading ? '#94a3b8' : '#10b981', 
                 color: 'white', 
                 border: 'none', 
-                borderRadius: '6px',
+                borderRadius: '8px',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
                 fontSize: '1rem',
@@ -229,8 +250,8 @@ const RegisterPage: React.FC = () => {
             </button>
           </form>
 
-          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-            <p style={{ color: '#64748b', margin: 0 }}>
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <p style={{ color: '#64748b', margin: 0, fontSize: '0.875rem' }}>
               Déjà un compte ?{' '}
               <Link to="/login" style={{ color: '#10b981', textDecoration: 'none', fontWeight: '600' }}>
                 Se connecter
