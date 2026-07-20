@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { get, post, del } from '../services/api';
+import { get, post, put, del } from '../services/api';
 import { Task, Project } from '../types';
 
 const TasksPage: React.FC = () => {
@@ -11,11 +11,20 @@ const TasksPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | ''>('');
+  const [newTaskName, setNewTaskName] = useState('');
+  const [newTaskDesc, setNewTaskDesc] = useState('');
 
   useEffect(() => {
     fetchProjects();
-    fetchAllTasks();
   }, []);
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      fetchAllTasks();
+    }
+  }, [projects]);
 
   const fetchProjects = async () => {
     try {
@@ -39,7 +48,58 @@ const TasksPage: React.FC = () => {
       }
       setTasks(allTasks);
     } catch (err: any) {
-      setError('Impossible de charger les tâches.');
+      console.error('Erreur chargement tâches:', err);
+    }
+  };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProjectId || !newTaskName) {
+      setError('Veuillez sélectionner un projet et donner un nom à la tâche.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await post<Task>(`/projects/${selectedProjectId}/tasks`, {
+        name: newTaskName,
+        description: newTaskDesc,
+        status: 'a_faire',
+        complexity: 'moyenne',
+        user_id: 1
+      });
+      
+      if (response.success && response.data) {
+        setTasks([...tasks, response.data]);
+        setNewTaskName('');
+        setNewTaskDesc('');
+        setSelectedProjectId('');
+        setShowCreateForm(false);
+        setSuccessMsg('Tâche créée avec succès !');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur lors de la création.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (taskId: number, projectId: number, newStatus: string) => {
+    try {
+      const response = await put<Task>(`/projects/${projectId}/tasks/${taskId}`, {
+        status: newStatus
+      });
+      
+      if (response.success && response.data) {
+        setTasks(tasks.map(t => t.id === taskId ? response.data : t));
+        setSuccessMsg('Statut mis à jour !');
+        setTimeout(() => setSuccessMsg(''), 2000);
+      }
+    } catch (err: any) {
+      setError('Erreur lors de la mise à jour du statut.');
     }
   };
 
@@ -72,7 +132,7 @@ const TasksPage: React.FC = () => {
       case 'a_faire': return 'À FAIRE';
       case 'en_cours': return 'EN COURS';
       case 'terminee': return 'TERMINÉE';
-      default: return status.toUpperCase();
+      default: return status?.toUpperCase() || 'INCONNU';
     }
   };
 
@@ -111,8 +171,7 @@ const TasksPage: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontSize: '1.5rem',
-            fontWeight: 'bold'
+            fontSize: '1.5rem'
           }}>
             ️
           </div>
@@ -152,7 +211,7 @@ const TasksPage: React.FC = () => {
               gap: '0.75rem'
             }}
           >
-            <span>📁</span> Projets
+            <span></span> Projets
           </button>
           <button 
             style={{ 
@@ -193,44 +252,128 @@ const TasksPage: React.FC = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h2 style={{ color: '#1e293b', margin: 0, fontSize: '1.875rem', fontWeight: '700' }}>Toutes les tâches</h2>
+          <button 
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            style={{ 
+              padding: '0.875rem 1.5rem', 
+              backgroundColor: '#10b981', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            + Nouvelle tâche
+          </button>
         </div>
 
         {error && <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{error}</div>}
         {successMsg && <div style={{ color: '#166534', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>{successMsg}</div>}
 
+        {/* Formulaire de création */}
+        {showCreateForm && (
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', color: '#1e293b' }}>Créer une nouvelle tâche</h3>
+            <form onSubmit={handleCreateTask}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: '500' }}>Projet</label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(Number(e.target.value))}
+                  required
+                  style={{ width: '100%', padding: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box' }}
+                >
+                  <option value="">-- Sélectionner un projet --</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: '500' }}>Nom de la tâche</label>
+                <input
+                  type="text"
+                  value={newTaskName}
+                  onChange={(e) => setNewTaskName(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: '500' }}>Description</label>
+                <textarea
+                  value={newTaskDesc}
+                  onChange={(e) => setNewTaskDesc(e.target.value)}
+                  style={{ width: '100%', padding: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', minHeight: '100px', resize: 'vertical', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" disabled={isLoading} style={{ 
+                  padding: '0.875rem 1.5rem', 
+                  backgroundColor: isLoading ? '#94a3b8' : '#10b981', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontWeight: '600'
+                }}>
+                  {isLoading ? 'Création...' : 'Créer la tâche'}
+                </button>
+                <button type="button" onClick={() => setShowCreateForm(false)} style={{ 
+                  padding: '0.875rem 1.5rem', 
+                  backgroundColor: '#f1f5f9', 
+                  color: '#64748b', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}>
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Filtres */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-          {['all', 'a_faire', 'en_cours', 'terminee'].map(status => (
+          {[
+            { key: 'all', label: 'Toutes' },
+            { key: 'a_faire', label: 'À FAIRE' },
+            { key: 'en_cours', label: 'EN COURS' },
+            { key: 'terminee', label: 'TERMINÉE' }
+          ].map(item => (
             <button
-              key={status}
-              onClick={() => setFilter(status)}
+              key={item.key}
+              onClick={() => setFilter(item.key)}
               style={{ 
                 padding: '0.625rem 1.25rem', 
-                backgroundColor: filter === status ? '#1e293b' : 'white', 
-                color: filter === status ? 'white' : '#64748b', 
+                backgroundColor: filter === item.key ? '#1e293b' : 'white', 
+                color: filter === item.key ? 'white' : '#64748b', 
                 border: '1px solid #e2e8f0', 
                 borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: filter === status ? '600' : '400',
+                fontWeight: filter === item.key ? '600' : '400',
                 fontSize: '0.875rem'
               }}
             >
-              {status === 'all' ? 'Toutes' : getStatusLabel(status)}
+              {item.label} ({item.key === 'all' ? tasks.length : tasks.filter(t => t.status === item.key).length})
             </button>
           ))}
         </div>
 
         {/* Tableau des tâches */}
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.875rem', fontWeight: '600' }}>TÂCHE</th>
-                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.875rem', fontWeight: '600' }}>PROJET</th>
-                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.875rem', fontWeight: '600' }}>STATUT</th>
-                <th style={{ padding: '1rem', textAlign: 'right', color: '#64748b', fontSize: '0.875rem', fontWeight: '600' }}>ACTIONS</th>
+              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>TÂCHE</th>
+                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>PROJET</th>
+                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>STATUT</th>
+                <th style={{ padding: '1rem', textAlign: 'right', color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -246,27 +389,35 @@ const TasksPage: React.FC = () => {
                       }} />
                       <div>
                         <div style={{ fontWeight: '600', color: '#1e293b' }}>{task.name}</div>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
+                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {task.description || 'Aucune description'}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '1rem', color: '#64748b' }}>
+                  <td style={{ padding: '1rem', color: '#64748b', fontSize: '0.875rem' }}>
                     {getProjectName(task.project_id)}
                   </td>
                   <td style={{ padding: '1rem' }}>
-                    <span style={{ 
-                      padding: '0.375rem 0.875rem', 
-                      backgroundColor: getStatusColor(task.status || 'a_faire') + '20',
-                      color: getStatusColor(task.status || 'a_faire'),
-                      border: `1px solid ${getStatusColor(task.status || 'a_faire')}`,
-                      borderRadius: '20px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600'
-                    }}>
-                      {getStatusLabel(task.status || 'a_faire')}
-                    </span>
+                    <select
+                      value={task.status || 'a_faire'}
+                      onChange={(e) => handleStatusChange(task.id, task.project_id, e.target.value)}
+                      style={{ 
+                        padding: '0.5rem 0.75rem', 
+                        backgroundColor: getStatusColor(task.status || 'a_faire') + '20',
+                        color: getStatusColor(task.status || 'a_faire'),
+                        border: `1px solid ${getStatusColor(task.status || 'a_faire')}`,
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="a_faire">À FAIRE</option>
+                      <option value="en_cours">EN COURS</option>
+                      <option value="terminee">TERMINÉE</option>
+                    </select>
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'right' }}>
                     <button 
@@ -278,10 +429,11 @@ const TasksPage: React.FC = () => {
                         border: 'none', 
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '0.875rem'
+                        fontSize: '0.875rem',
+                        fontWeight: '600'
                       }}
                     >
-                      Supprimer
+                      🗑️ Supprimer
                     </button>
                   </td>
                 </tr>
@@ -290,7 +442,9 @@ const TasksPage: React.FC = () => {
               {filteredTasks.length === 0 && (
                 <tr>
                   <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                    Aucune tâche trouvée
+                    {tasks.length === 0 
+                      ? 'Aucune tâche. Créez votre première tâche !' 
+                      : 'Aucune tâche avec ce statut.'}
                   </td>
                 </tr>
               )}

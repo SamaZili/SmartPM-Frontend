@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { get, post, del } from '../services/api';
+import { get, post, put, del } from '../services/api';
 import { Project } from '../types';
 
 const ProjectsPage: React.FC = () => {
@@ -8,6 +8,9 @@ const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -57,6 +60,38 @@ const ProjectsPage: React.FC = () => {
     }
   };
 
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setEditName(project.name);
+    setEditDesc(project.description || '');
+  };
+
+  const handleUpdateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject) return;
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await put<Project>(`/projects/${editingProject.id}`, { 
+        name: editName, 
+        description: editDesc
+      });
+      
+      if (response.success && response.data) {
+        setProjects(projects.map(p => p.id === editingProject.id ? response.data : p));
+        setEditingProject(null);
+        setSuccessMsg('Projet modifié avec succès !');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur lors de la modification.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteProject = async (projectId: number) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) return;
     
@@ -86,7 +121,7 @@ const ProjectsPage: React.FC = () => {
       case 'en_cours': return 'ACTIF';
       case 'termine': return 'TERMINÉ';
       case 'en_pause': return 'EN PAUSE';
-      default: return status.toUpperCase();
+      default: return status?.toUpperCase() || 'INCONNU';
     }
   };
 
@@ -116,10 +151,9 @@ const ProjectsPage: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontSize: '1.5rem',
-            fontWeight: 'bold'
+            fontSize: '1.5rem'
           }}>
-            ️
+            🏗️
           </div>
           <h1 style={{ color: '#10b981', fontSize: '1.5rem', margin: 0, fontWeight: '700' }}>SmartPM</h1>
         </div>
@@ -209,8 +243,7 @@ const ProjectsPage: React.FC = () => {
               border: 'none', 
               borderRadius: '8px',
               cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '1rem'
+              fontWeight: '600'
             }}
           >
             + Nouveau projet
@@ -220,9 +253,9 @@ const ProjectsPage: React.FC = () => {
         {error && <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{error}</div>}
         {successMsg && <div style={{ color: '#166534', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>{successMsg}</div>}
 
-        {/* Formulaire d'ajout */}
+        {/* Formulaire de création */}
         {showForm && (
-          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
             <h3 style={{ margin: '0 0 1.5rem 0', color: '#1e293b' }}>Créer un nouveau projet</h3>
             <form onSubmit={handleAddProject}>
               <div style={{ marginBottom: '1rem' }}>
@@ -271,6 +304,57 @@ const ProjectsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Formulaire de modification */}
+        {editingProject && (
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '2px solid #f59e0b', marginBottom: '2rem' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', color: '#1e293b' }}>✏️ Modifier le projet : {editingProject.name}</h3>
+            <form onSubmit={handleUpdateProject}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: '500' }}>Nom du projet</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#475569', fontWeight: '500' }}>Description</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  style={{ width: '100%', padding: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', minHeight: '100px', resize: 'vertical', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" disabled={isLoading} style={{ 
+                  padding: '0.875rem 1.5rem', 
+                  backgroundColor: isLoading ? '#94a3b8' : '#f59e0b', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontWeight: '600'
+                }}>
+                  {isLoading ? 'Modification...' : 'Enregistrer les modifications'}
+                </button>
+                <button type="button" onClick={() => setEditingProject(null)} style={{ 
+                  padding: '0.875rem 1.5rem', 
+                  backgroundColor: '#f1f5f9', 
+                  color: '#64748b', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}>
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Liste des projets */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
           {projects.map(project => (
@@ -278,9 +362,8 @@ const ProjectsPage: React.FC = () => {
               backgroundColor: 'white', 
               padding: '1.5rem', 
               borderRadius: '12px', 
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: '1px solid #e2e8f0',
-              position: 'relative'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              border: '1px solid #e2e8f0'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div style={{ 
@@ -303,34 +386,51 @@ const ProjectsPage: React.FC = () => {
                   color: 'white', 
                   borderRadius: '20px',
                   fontSize: '0.75rem',
-                  fontWeight: '600',
-                  textTransform: 'uppercase'
+                  fontWeight: '600'
                 }}>
                   {getStatusLabel(project.status || 'en_cours')}
                 </span>
               </div>
               
               <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '1.125rem', fontWeight: '600' }}>{project.name}</h3>
-              <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.875rem', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.875rem', lineHeight: '1.5', minHeight: '40px' }}>
                 {project.description || 'Aucune description'}
               </p>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
                 <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {project.id}</span>
-                <button 
-                  onClick={() => handleDeleteProject(project.id)}
-                  style={{ 
-                    padding: '0.5rem 1rem', 
-                    backgroundColor: '#ef4444', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Supprimer
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    onClick={() => handleEditProject(project)}
+                    style={{ 
+                      padding: '0.5rem 1rem', 
+                      backgroundColor: '#f59e0b', 
+                      color: 'white', 
+                      border: 'none', 
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ✏️ Modifier
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProject(project.id)}
+                    style={{ 
+                      padding: '0.5rem 1rem', 
+                      backgroundColor: '#ef4444', 
+                      color: 'white', 
+                      border: 'none', 
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ️ Supprimer
+                  </button>
+                </div>
               </div>
             </div>
           ))}
