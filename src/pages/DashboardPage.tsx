@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { post } from '../services/api';
-import { ApiResponse, Estimation, Task } from '../types';
+import { ApiResponse, Estimation } from '../types';
 
 interface DashboardPageProps {
-  // On pourrait passer projectId et taskId via les props ou React Router params
   projectId: number;
   taskId: number;
   taskName: string;
@@ -20,8 +19,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ projectId, taskId, taskNa
     setEstimation(null);
 
     try {
-      // Appel strictement typé au backend Laravel
-      // Nous envoyons rien dans le body (ou un body vide {}), et nous attendons une Estimation en retour
       const response: ApiResponse<Estimation> = await post<Estimation, Record<string, never>>(
         `/projects/${projectId}/tasks/${taskId}/estimate`,
         {}
@@ -33,7 +30,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ projectId, taskId, taskNa
         setError(response.message || "L'estimation a échoué.");
       }
     } catch (err) {
-      // Gestion d'erreur typée grâce à notre service api.ts
       setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
     } finally {
       setIsLoading(false);
