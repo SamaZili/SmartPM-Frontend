@@ -5,12 +5,12 @@ import { useProjects } from '../../features/Dashboard/hooks/useProjects';
 import { useTasks } from '../../features/Dashboard/hooks/useTasks';
 import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { Project, Estimation } from '../../types';
+import { Project, Task, Estimation } from '../../types';
 import styles from './DashboardPage.module.css';
-
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   
+  // Hooks personnalisés
   const { projects, addProject } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask } = useTasks(projects, selectedProject?.id || null);
@@ -19,12 +19,15 @@ const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
   
+  // Form states
   const [newProjectName, setNewProjectName] = useState('');
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
 
+  // Stats calculées
   const stats = useDashboardStats(projects, tasks, estimations);
 
+  // Handlers
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName) return;
@@ -70,6 +73,7 @@ const DashboardPage: React.FC = () => {
       if (response.success && response.data) {
         setEstimationResult(response.data);
         setEstimations(prev => [...prev, response.data!]);
+        showMessage('Estimation IA générée avec succès !');
       }
     } catch (err: any) {
       showMessage(err.response?.data?.message || "Erreur lors de l'estimation.", 5000, 'error');
@@ -87,6 +91,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarLogo}>🏗️</div>
@@ -94,7 +99,7 @@ const DashboardPage: React.FC = () => {
         </div>
         
         <nav className={styles.navMenu}>
-          <button className={styles.navButtonActive}>📊 Tableau de bord</button>
+          <button className={styles.navButtonActive}> Tableau de bord</button>
           <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
           <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
           <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
@@ -110,15 +115,18 @@ const DashboardPage: React.FC = () => {
         </div>
       </aside>
 
+      {/* Main Content */}
       <main className={styles.mainContent}>
         <h2 className={styles.pageTitle}>Vue d'ensemble analytique</h2>
 
+        {/* Messages */}
         {successMsg && (
           <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>
             {successMsg}
           </div>
         )}
 
+        {/* Stats Cards */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Projets actifs</p>
@@ -138,6 +146,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Chart */}
         <div className={styles.chartSection}>
           <h3 className={styles.chartTitle}>📊 Distribution des tâches par statut</h3>
           <div className={styles.chartContainer}>
@@ -162,6 +171,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Estimation History */}
         <div className={styles.estimationHistory}>
           <h3 className={styles.estimationHistoryTitle}>🤖 Historique des estimations IA</h3>
           {estimations.length === 0 ? (
@@ -188,8 +198,9 @@ const DashboardPage: React.FC = () => {
           )}
         </div>
 
+        {/* Projects Section */}
         <div className={styles.projectsSection}>
-          <h3 className={styles.projectsSectionTitle}> Mes Projets</h3>
+          <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
           
           <form onSubmit={handleAddProject} className={styles.projectForm}>
             <input 
@@ -221,6 +232,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Tasks Section */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3 className={styles.tasksSectionTitle}>
@@ -244,7 +256,7 @@ const DashboardPage: React.FC = () => {
             </form>
 
             <div className={styles.taskList}>
-              {tasks.map((task: any) => (
+              {tasks.map((task: Task) => (
                 <div key={task.id} className={styles.taskItem}>
                   <div className={styles.taskItemContent}>
                     <h4 className={styles.taskItemTitle}>{task.name}</h4>
@@ -252,24 +264,27 @@ const DashboardPage: React.FC = () => {
                       {task.description || 'Aucune description'}
                     </p>
                   </div>
+                  {/* 🔴 BOUTON ESTIMER VIA IA - LE CŒUR DU PROJET */}
                   <button 
                     onClick={() => handleEstimate(task.id)}
                     disabled={isLoading}
-                    className={styles.taskItemButton}
+                    className={styles.estimateButton}
+                    title="Estimer l'effort de cette tâche via l'IA"
                   >
-                     Estimer via IA
+                    🤖 Estimer via IA
                   </button>
                 </div>
               ))}
               {tasks.length === 0 && (
                 <div className={styles.taskEmpty}>
-                  Aucune tâche pour ce projet.
+                  Aucune tâche pour ce projet. Ajoutez une tâche pour utiliser l'estimation IA.
                 </div>
               )}
             </div>
           </div>
         )}
 
+        {/* AI Result */}
         {estimationResult && (
           <div className={styles.aiResult}>
             <h3 className={styles.aiResultTitle}>✅ Résultat de l'Estimation IA</h3>

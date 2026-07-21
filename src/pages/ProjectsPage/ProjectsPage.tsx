@@ -16,12 +16,15 @@ const ProjectsPage: React.FC = () => {
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName) return;
+    if (!newProjectName.trim()) {
+      showMessage('Veuillez entrer un nom de projet', 3000, 'error');
+      return;
+    }
     
     try {
       await addProject({ 
         name: newProjectName, 
-        description: newDescription,
+        description: newDescription || undefined,
         status: newStatus
       });
       setNewProjectName('');
@@ -35,20 +38,20 @@ const ProjectsPage: React.FC = () => {
 
   const handleEditProject = async (project: Project) => {
     const newName = prompt('Nouveau nom du projet:', project.name);
-    const newDescription = prompt('Nouvelle description:', project.description || '');
-    const newStatus = prompt('Nouveau statut:', project.status) || 'en_cours';
+    if (!newName) return;
     
-    if (newName) {
-      try {
-        await updateProject(project.id, { 
-          name: newName,
-          description: newDescription,
-          status: newStatus
-        });
-        showMessage('Projet mis à jour avec succès !');
-      } catch (err: any) {
-        showMessage(err.message || 'Erreur lors de la modification.', 5000, 'error');
-      }
+    const rawDescription = prompt('Nouvelle description:', project.description || '');
+    const newStatus = prompt('Nouveau statut (en_cours, termine, en_pause):', project.status) || 'en_cours';
+    
+    try {
+      await updateProject(project.id, { 
+        name: newName,
+        description: rawDescription !== null ? rawDescription : project.description,
+        status: newStatus
+      });
+      showMessage('Projet mis à jour avec succès !');
+    } catch (err: any) {
+      showMessage(err.message || 'Erreur lors de la modification.', 5000, 'error');
     }
   };
 
@@ -56,6 +59,9 @@ const ProjectsPage: React.FC = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
         await removeProject(id);
+        if (selectedProject?.id === id) {
+          setSelectedProject(null);
+        }
         showMessage('Projet supprimé avec succès !');
       } catch (err: any) {
         showMessage(err.message || 'Erreur lors de la suppression.', 5000, 'error');
@@ -70,18 +76,17 @@ const ProjectsPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.sidebarLogo}>🏗️</div>
+          <div className={styles.sidebarLogo}>️</div>
           <h1 className={styles.sidebarTitle}>SmartPM</h1>
         </div>
         
         <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>Tableau de bord</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>Projets</button>
-          <button className={styles.navButton} onClick={() => navigate('/tasks')}>Tâches</button>
-          <button className={styles.navButton} onClick={() => navigate('/profile')}>Profil</button>
+          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>📊 Tableau de bord</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}> Projets</button>
+          <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
+          <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -94,7 +99,6 @@ const ProjectsPage: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <h2 className={styles.pageTitle}>Gestion des Projets</h2>
 
@@ -104,7 +108,6 @@ const ProjectsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Projects Section */}
         <div className={styles.projectsSection}>
           <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
           
@@ -114,26 +117,29 @@ const ProjectsPage: React.FC = () => {
               placeholder="Nom du nouveau projet..." 
               value={newProjectName} 
               onChange={(e) => setNewProjectName(e.target.value)} 
+              className={styles.formInput}
             />
             <input 
               type="text" 
               placeholder="Description..." 
               value={newDescription} 
               onChange={(e) => setNewDescription(e.target.value)} 
+              className={styles.formInput}
             />
             <select 
               value={newStatus} 
               onChange={(e) => setNewStatus(e.target.value)}
+              className={styles.formSelect}
             >
               <option value="en_cours">En cours</option>
               <option value="termine">Terminé</option>
               <option value="en_pause">En pause</option>
             </select>
-            <button type="submit">+ Nouveau projet</button>
+            <button type="submit" className={styles.addButton}>+ Nouveau projet</button>
           </form>
 
           <div className={styles.projectsGrid}>
-            {projects.map(project => (
+            {projects.map((project: Project) => (
               <div 
                 key={project.id} 
                 className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard}
@@ -147,38 +153,29 @@ const ProjectsPage: React.FC = () => {
                 </div>
                 <h4 className={styles.projectCardTitle}>{project.name}</h4>
                 <p className={styles.projectCardId}>ID: {project.id}</p>
-                <p style={{ margin: '0.5rem 0', color: '#64748b' }}>{project.description || 'Aucune description'}</p>
+                <p className={styles.projectCardDescription}>{project.description || 'Aucune description'}</p>
                 
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <div className={styles.projectCardActions}>
                   <button 
                     onClick={() => handleEditProject(project)}
-                    style={{ 
-                      padding: '0.5rem 0.75rem', 
-                      background: '#3b82f6', 
-                      color: 'white', 
-                      border: 'none', 
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className={styles.editButton}
                   >
                     Modifier
                   </button>
                   <button 
                     onClick={() => handleDeleteProject(project.id)}
-                    style={{ 
-                      padding: '0.5rem 0.75rem', 
-                      background: '#ef4444', 
-                      color: 'white', 
-                      border: 'none', 
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className={styles.deleteButton}
                   >
                     Supprimer
                   </button>
                 </div>
               </div>
             ))}
+            {projects.length === 0 && (
+              <div className={styles.emptyState}>
+                Aucun projet pour le moment. Créez votre premier projet !
+              </div>
+            )}
           </div>
         </div>
       </main>

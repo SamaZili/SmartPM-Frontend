@@ -28,7 +28,7 @@ export function useProjects() {
     try {
       const response = await projectsApi.create(data);
       if (response.success && response.data) {
-        setProjects(prev => [...prev, response.data]);
+        setProjects(prev => [...prev, response.data!]);
         return response.data;
       }
     } catch (err: any) {
@@ -40,7 +40,7 @@ export function useProjects() {
     try {
       const response = await projectsApi.update(id, data);
       if (response.success && response.data) {
-        setProjects(prev => prev.map(p => p.id === id ? response.data : p));
+        setProjects(prev => prev.map(p => p.id === id ? response.data! : p).filter((p): p is Project => p !== undefined));
         return response.data;
       }
     } catch (err: any) {

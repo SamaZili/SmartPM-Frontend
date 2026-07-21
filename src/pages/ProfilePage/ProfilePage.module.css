@@ -1,5 +1,3 @@
-/* Copiez DashboardPage.module.css et modifiez les classes */
-/* Par exemple : */
 .pageContainer {
   min-height: 100vh;
   background-color: #f8fafc;
@@ -136,12 +134,29 @@
   font-weight: 700;
 }
 
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 1rem;
+}
+
 .profileSection {
   background-color: white;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
+  max-width: 700px;
+}
+
+.sectionTitle {
+  margin: 0 0 2rem 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
 }
 
 .profileForm {
@@ -150,33 +165,65 @@
   gap: 1.5rem;
 }
 
-.inputGroup {
+.formGroup {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.inputGroup label {
+.formGroup label {
   font-weight: 600;
   color: #374151;
   font-size: 0.875rem;
 }
 
-.inputGroup input {
+.formGroup input {
   padding: 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.formGroup input:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
 }
 
 .submitButton {
-  padding: 0.875rem 1.5rem;
-  background-color: #10b981;
+  padding: 1rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 1rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .errorMessage {

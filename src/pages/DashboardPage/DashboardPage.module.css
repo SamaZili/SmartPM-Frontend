@@ -1,4 +1,3 @@
-/* Container principal */
 .pageContainer {
   min-height: 100vh;
   background-color: #f8fafc;
@@ -6,7 +5,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Sidebar */
 .sidebar {
   width: 260px;
   background-color: white;
@@ -43,7 +41,6 @@
   font-weight: 700;
 }
 
-/* Navigation */
 .navMenu {
   display: flex;
   flex-direction: column;
@@ -76,7 +73,6 @@
   font-weight: 600;
 }
 
-/* User info */
 .userInfo {
   margin-top: auto;
   padding-top: 1.5rem;
@@ -125,7 +121,6 @@
   font-size: 0.875rem;
 }
 
-/* Main content */
 .mainContent {
   flex: 1;
   padding: 2rem;
@@ -139,7 +134,6 @@
   font-weight: 700;
 }
 
-/* Stats Grid */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -176,7 +170,6 @@
   margin: 0;
 }
 
-/* Messages */
 .errorMessage {
   color: #dc2626;
   background-color: #fef2f2;
@@ -195,7 +188,6 @@
   border: 1px solid #bbf7d0;
 }
 
-/* Chart Section */
 .chartSection {
   background-color: white;
   padding: 2rem;
@@ -249,7 +241,6 @@
   font-weight: 500;
 }
 
-/* Estimation History */
 .estimationHistory {
   background-color: white;
   padding: 2rem;
@@ -321,7 +312,6 @@
   color: #64748b;
 }
 
-/* Projects Section */
 .projectsSection {
   background-color: white;
   padding: 2rem;
@@ -432,7 +422,6 @@
   color: #64748b;
 }
 
-/* Tasks Section */
 .tasksSection {
   background-color: white;
   padding: 2rem;
@@ -489,15 +478,17 @@
 .taskItem {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   padding: 1.25rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #f8fafc;
+  gap: 1rem;
 }
 
 .taskItemContent {
   flex: 1;
+  min-width: 0;
 }
 
 .taskItemTitle {
@@ -505,6 +496,7 @@
   color: #1e293b;
   font-size: 1rem;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .taskItemDescription {
@@ -514,20 +506,36 @@
   line-height: 1.5;
 }
 
-.taskItemButton {
-  padding: 0.625rem 1.25rem;
-  background-color: #8b5cf6;
+/* 🔴 BOUTON ESTIMER VIA IA - LE CŒUR DU PROJET */
+.estimateButton {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
-  margin-left: 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
 }
 
-.taskItemButton:disabled {
-  background-color: #94a3b8;
+.estimateButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(139, 92, 246, 0.4);
+}
+
+.estimateButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.estimateButton:disabled {
+  background: #94a3b8;
   cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
 }
 
 .taskEmpty {
@@ -541,12 +549,14 @@
 
 /* AI Result */
 .aiResult {
-  background-color: #f0fdf4;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   color: #166534;
   padding: 2rem;
   border-radius: 12px;
   border: 2px solid #10b981;
   margin-bottom: 2rem;
+  margin-top: 1rem;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
 }
 
 .aiResultTitle {
@@ -563,7 +573,7 @@
 
 .aiResultInfo p {
   margin: 0.75rem 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 

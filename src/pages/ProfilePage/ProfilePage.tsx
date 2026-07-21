@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../../features/Profile/hooks/useProfile';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { User } from '../../types';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateProfile, isLoading, error } = useProfile();
+  const { user, updateProfile, isLoading, error: apiError } = useProfile();
+  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,13 +16,12 @@ const ProfilePage: React.FC = () => {
     new_password: '',
     new_password_confirmation: '',
   });
-  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name,
-        email: user.email,
+        name: user.name || '',
+        email: user.email || '',
         current_password: '',
         new_password: '',
         new_password_confirmation: '',
@@ -40,9 +40,31 @@ const ProfilePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (formData.new_password && formData.new_password !== formData.new_password_confirmation) {
+      showMessage('Les nouveaux mots de passe ne correspondent pas', 5000, 'error');
+      return;
+    }
+
+    const updateData: any = {
+      name: formData.name,
+      email: formData.email,
+    };
+
+    if (formData.new_password) {
+      updateData.current_password = formData.current_password;
+      updateData.new_password = formData.new_password;
+      updateData.new_password_confirmation = formData.new_password_confirmation;
+    }
+    
     try {
-      await updateProfile(formData);
+      await updateProfile(updateData);
       showMessage('Profil mis à jour avec succès !');
+      setFormData(prev => ({
+        ...prev,
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: '',
+      }));
     } catch (err: any) {
       showMessage(err.message || 'Erreur lors de la mise à jour.', 5000, 'error');
     }
@@ -56,16 +78,13 @@ const ProfilePage: React.FC = () => {
   if (!user) {
     return (
       <div className={styles.pageContainer}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>Chargement du profil...</p>
-        </div>
+        <div className={styles.loading}>Chargement du profil...</div>
       </div>
     );
   }
 
   return (
     <div className={styles.pageContainer}>
-      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarLogo}>🏗️</div>
@@ -73,10 +92,10 @@ const ProfilePage: React.FC = () => {
         </div>
         
         <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>Tableau de bord</button>
-          <button className={styles.navButton} onClick={() => navigate('/projects')}>Projets</button>
-          <button className={styles.navButton} onClick={() => navigate('/tasks')}>Tâches</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>Profil</button>
+          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>📊 Tableau de bord</button>
+          <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
+          <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -89,7 +108,6 @@ const ProfilePage: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <h2 className={styles.pageTitle}>Mon Profil</h2>
 
@@ -99,21 +117,22 @@ const ProfilePage: React.FC = () => {
           </div>
         )}
 
-        {error && (
+        {apiError && (
           <div className={styles.errorMessage}>
-            {error}
+            {apiError}
           </div>
         )}
 
         <div className={styles.profileSection}>
-          <h3 className={styles.projectsSectionTitle}>Configurer mon profil</h3>
+          <h3 className={styles.sectionTitle}>Configurer mon profil</h3>
           
           <form onSubmit={handleSubmit} className={styles.profileForm}>
-            <div className={styles.inputGroup}>
+            <div className={styles.formGroup}>
               <label htmlFor="name">Nom complet</label>
               <input
                 id="name"
                 name="name"
+                type="text"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -121,20 +140,20 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             
-            <div className={styles.inputGroup}>
+            <div className={styles.formGroup}>
               <label htmlFor="email">Adresse e-mail</label>
               <input
                 id="email"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                type="email"
               />
             </div>
             
-            <div className={styles.inputGroup}>
+            <div className={styles.formGroup}>
               <label htmlFor="current_password">Mot de passe actuel</label>
               <input
                 id="current_password"
@@ -143,10 +162,11 @@ const ProfilePage: React.FC = () => {
                 value={formData.current_password}
                 onChange={handleChange}
                 disabled={isLoading}
+                placeholder="Laissez vide si vous ne changez pas le mot de passe"
               />
             </div>
             
-            <div className={styles.inputGroup}>
+            <div className={styles.formGroup}>
               <label htmlFor="new_password">Nouveau mot de passe</label>
               <input
                 id="new_password"
@@ -156,10 +176,11 @@ const ProfilePage: React.FC = () => {
                 onChange={handleChange}
                 disabled={isLoading}
                 minLength={8}
+                placeholder="Minimum 8 caractères"
               />
             </div>
             
-            <div className={styles.inputGroup}>
+            <div className={styles.formGroup}>
               <label htmlFor="new_password_confirmation">Confirmation du nouveau mot de passe</label>
               <input
                 id="new_password_confirmation"
@@ -168,6 +189,7 @@ const ProfilePage: React.FC = () => {
                 value={formData.new_password_confirmation}
                 onChange={handleChange}
                 disabled={isLoading}
+                placeholder="Confirmez le nouveau mot de passe"
               />
             </div>
             

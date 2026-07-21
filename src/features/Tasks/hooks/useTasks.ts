@@ -61,7 +61,7 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     try {
       const response = await tasksApi.create(projectId, data);
       if (response.success && response.data) {
-        setTasks(prev => [...prev, response.data]);
+        setTasks(prev => [...prev, response.data!]);
         return response.data;
       }
     } catch (err: any) {
@@ -73,20 +73,11 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     try {
       const response = await tasksApi.updateStatus(projectId, taskId, data);
       if (response.success && response.data) {
-        setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
+        setTasks(prev => prev.map(t => t.id === taskId ? response.data! : t).filter((t): t is Task => t !== undefined));
         return response.data;
       }
     } catch (err: any) {
       throw new Error(err.response?.data?.message || 'Erreur lors de la mise à jour.');
-    }
-  }, []);
-
-  const removeTask = useCallback(async (projectId: number, taskId: number) => {
-    try {
-      await tasksApi.delete(projectId, taskId);
-      setTasks(prev => prev.filter(t => t.id !== taskId));
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || 'Erreur lors de la suppression.');
     }
   }, []);
 
@@ -106,7 +97,6 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     fetchAllTasks,
     addTask, 
     updateTaskStatus,
-    removeTask,
     setTasks 
   };
 }

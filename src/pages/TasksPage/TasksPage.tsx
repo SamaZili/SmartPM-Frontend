@@ -10,7 +10,7 @@ const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(projects, selectedProject?.id || null);
+  const { tasks, addTask, updateTaskStatus } = useTasks(projects, selectedProject?.id || null);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState('a_faire');
@@ -18,12 +18,15 @@ const TasksPage: React.FC = () => {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProject || !newTaskName) return;
+    if (!selectedProject || !newTaskName.trim()) {
+      showMessage('Veuillez sélectionner un projet et entrer un nom de tâche', 3000, 'error');
+      return;
+    }
     
     try {
       await addTask(selectedProject.id, {
         name: newTaskName,
-        description: newTaskDesc,
+        description: newTaskDesc || undefined,
         status: newTaskStatus,
         complexity: 'moyenne',
       });
@@ -46,37 +49,33 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTask = async (task: Task) => {
-    if (!selectedProject) return;
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-      try {
-        await removeTask(selectedProject.id, task.id);
-        showMessage('Tâche supprimée avec succès !');
-      } catch (err: any) {
-        showMessage(err.message || 'Erreur lors de la suppression.', 5000, 'error');
-      }
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'a_faire': return '#94a3b8';
+      case 'en_cours': return '#f59e0b';
+      case 'terminee': return '#10b981';
+      default: return '#64748b';
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
-      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.sidebarLogo}>🏗️</div>
+          <div className={styles.sidebarLogo}>️</div>
           <h1 className={styles.sidebarTitle}>SmartPM</h1>
         </div>
         
         <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>Tableau de bord</button>
-          <button className={styles.navButton} onClick={() => navigate('/projects')}>Projets</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>Tâches</button>
-          <button className={styles.navButton} onClick={() => navigate('/profile')}>Profil</button>
+          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>📊 Tableau de bord</button>
+          <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
+          <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -89,7 +88,6 @@ const TasksPage: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <h2 className={styles.pageTitle}>Gestion des Tâches</h2>
 
@@ -99,12 +97,11 @@ const TasksPage: React.FC = () => {
           </div>
         )}
 
-        {/* Projects Section */}
         <div className={styles.projectsSection}>
           <h3 className={styles.projectsSectionTitle}>📁 Sélectionnez un projet</h3>
           
           <div className={styles.projectsGrid}>
-            {projects.map(project => (
+            {projects.map((project: Project) => (
               <div 
                 key={project.id} 
                 className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard}
@@ -118,17 +115,21 @@ const TasksPage: React.FC = () => {
                 </div>
                 <h4 className={styles.projectCardTitle}>{project.name}</h4>
                 <p className={styles.projectCardId}>ID: {project.id}</p>
-                <p style={{ margin: '0.5rem 0', color: '#64748b' }}>{project.description || 'Aucune description'}</p>
+                <p className={styles.projectCardDescription}>{project.description || 'Aucune description'}</p>
               </div>
             ))}
+            {projects.length === 0 && (
+              <div className={styles.emptyState}>
+                Aucun projet disponible. Créez d'abord un projet !
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Tasks Section */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3 className={styles.tasksSectionTitle}>
-              📋 Tâches pour : <span>{selectedProject.name}</span>
+               Tâches pour : <span>{selectedProject.name}</span>
             </h3>
             
             <form onSubmit={handleAddTask} className={styles.taskForm}>
@@ -138,71 +139,61 @@ const TasksPage: React.FC = () => {
                 value={newTaskName} 
                 onChange={(e) => setNewTaskName(e.target.value)} 
                 required
+                className={styles.formInput}
               />
               <textarea 
-                placeholder="Description..." 
+                placeholder="Description (importante pour l'IA)..." 
                 value={newTaskDesc} 
                 onChange={(e) => setNewTaskDesc(e.target.value)} 
+                className={styles.formTextarea}
               />
               <select 
                 value={newTaskStatus} 
                 onChange={(e) => setNewTaskStatus(e.target.value)}
+                className={styles.formSelect}
               >
                 <option value="a_faire">À faire</option>
                 <option value="en_cours">En cours</option>
                 <option value="terminee">Terminée</option>
               </select>
-              <button type="submit">+ Ajouter une tâche</button>
+              <button type="submit" className={styles.addButton}>+ Ajouter une tâche</button>
             </form>
 
             <div className={styles.taskList}>
-              {tasks.map(task => (
+              {tasks.map((task: Task) => (
                 <div key={task.id} className={styles.taskItem}>
                   <div className={styles.taskItemContent}>
                     <h4 className={styles.taskItemTitle}>{task.name}</h4>
                     <p className={styles.taskItemDescription}>
                       {task.description || 'Aucune description'}
                     </p>
+                    <span 
+                      className={styles.statusBadge}
+                      style={{ backgroundColor: getStatusColor(task.status) }}
+                    >
+                      {task.status}
+                    </span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div className={styles.taskActions}>
                     <select 
                       value={task.status}
                       onChange={(e) => handleUpdateStatus(task, e.target.value)}
-                      style={{ 
-                        padding: '0.5rem', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '6px',
-                        fontSize: '0.875rem'
-                      }}
+                      className={styles.statusSelect}
                     >
                       <option value="a_faire">À faire</option>
                       <option value="en_cours">En cours</option>
                       <option value="terminee">Terminée</option>
                     </select>
-                    <button 
-                      onClick={() => handleDeleteTask(task)}
-                      style={{ 
-                        padding: '0.5rem', 
-                        background: '#ef4444', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Supprimer
-                    </button>
                   </div>
                 </div>
               ))}
+              {tasks.length === 0 && (
+                <div className={styles.emptyState}>
+                  Aucune tâche pour ce projet. Ajoutez une tâche pour commencer !
+                </div>
+              )}
             </div>
-          </div>
-        )}
-
-        {tasks.length === 0 && selectedProject && (
-          <div className={styles.taskEmpty}>
-            Aucune tâche pour ce projet.
           </div>
         )}
       </main>
