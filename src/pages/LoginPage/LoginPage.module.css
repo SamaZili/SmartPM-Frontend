@@ -1,0 +1,110 @@
+/* Copiez DashboardPage.module.css et modifiez les classes */
+/* Par exemple : */
+.pageContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.loginCard {
+  background-color: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 440px;
+}
+
+.logo {
+  width: 64px;
+  height: 64px;
+  background-color: #10b981;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2.5rem;
+  margin: 0 auto 1.5rem;
+}
+
+.title {
+  color: #10b981;
+  font-size: 2rem;
+  text-align: center;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #64748b;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  font-size: 1rem;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.submitButton:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.link {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: block;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.errorMessage {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #fecaca;
+  font-size: 0.875rem;
+}
