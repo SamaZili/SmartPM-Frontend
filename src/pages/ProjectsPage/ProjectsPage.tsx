@@ -46,7 +46,7 @@ const ProjectsPage: React.FC = () => {
     try {
       await updateProject(project.id, { 
         name: newName,
-        description: rawDescription !== null ? rawDescription : project.description,
+        description: newDescription !== null ? newDescription : undefined, // ✅ CORRECT
         status: newStatus
       });
       showMessage('Projet mis à jour avec succès !');
