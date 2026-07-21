@@ -1,12 +1,14 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ResetPasswordPage from './pages/ResetPasswordPage'; // <-- AJOUT
-import DashboardPage from './pages/DashboardPage';
-import ProfilePage from './pages/ProfilePage';
-import ProjectsPage from './pages/ProjectsPage';
-import TasksPage from './pages/TasksPage';
+import LoginPage from './pages/LoginPage/LoginPage';
+import RegisterPage from './pages/RegisterPage/RegisterPage';
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage'; // Si tu l'as mis dans un dossier
+import DashboardPage from './pages/DashboardPage/DashboardPage';
+import ProfilePage from './pages/ProfilePage/ProfilePage';
+import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
+import TasksPage from './pages/TasksPage/TasksPage';
+
+// ... le reste de ton code App.tsx reste identique
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');

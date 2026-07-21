@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../features/Dashboard/api/dashboardApi';
-import { useProjects } from '../features/Dashboard/hooks/useProjects';
-import { useTasks } from '../features/Dashboard/hooks/useTasks';
-import { useDashboardStats } from '../features/Dashboard/hooks/useDashboardStats';
-import { useTemporaryMessage } from '../hooks/useTemporaryMessage';
-import { Project, Estimation } from '../types';
-import styles from './DashboardPage/DashboardPage.module.css';
+import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
+import { useProjects } from '../../features/Dashboard/hooks/useProjects';
+import { useTasks } from '../../features/Dashboard/hooks/useTasks';
+import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
+import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
+import { Project, Estimation } from '../../types';
+import styles from './DashboardPage.module.css';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // Hooks personnalisés
   const { projects, addProject } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask } = useTasks(projects, selectedProject?.id || null);
@@ -20,15 +19,12 @@ const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
   
-  // Form states
   const [newProjectName, setNewProjectName] = useState('');
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
 
-  // Stats calculées
   const stats = useDashboardStats(projects, tasks, estimations);
 
-  // Handlers
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName) return;
@@ -91,7 +87,6 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarLogo}>🏗️</div>
@@ -100,7 +95,7 @@ const DashboardPage: React.FC = () => {
         
         <nav className={styles.navMenu}>
           <button className={styles.navButtonActive}>📊 Tableau de bord</button>
-          <button className={styles.navButton} onClick={() => navigate('/projects')}> Projets</button>
+          <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
           <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
           <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
         </nav>
@@ -115,18 +110,15 @@ const DashboardPage: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <h2 className={styles.pageTitle}>Vue d'ensemble analytique</h2>
 
-        {/* Messages */}
         {successMsg && (
           <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>
             {successMsg}
           </div>
         )}
 
-        {/* Stats Cards */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Projets actifs</p>
@@ -146,7 +138,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Chart */}
         <div className={styles.chartSection}>
           <h3 className={styles.chartTitle}>📊 Distribution des tâches par statut</h3>
           <div className={styles.chartContainer}>
@@ -171,9 +162,8 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Estimation History */}
         <div className={styles.estimationHistory}>
-          <h3 className={styles.estimationHistoryTitle}> Historique des estimations IA</h3>
+          <h3 className={styles.estimationHistoryTitle}>🤖 Historique des estimations IA</h3>
           {estimations.length === 0 ? (
             <p className={styles.estimationEmpty}>Aucune estimation pour le moment.</p>
           ) : (
@@ -198,9 +188,8 @@ const DashboardPage: React.FC = () => {
           )}
         </div>
 
-        {/* Projects Section */}
         <div className={styles.projectsSection}>
-          <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
+          <h3 className={styles.projectsSectionTitle}> Mes Projets</h3>
           
           <form onSubmit={handleAddProject} className={styles.projectForm}>
             <input 
@@ -232,7 +221,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tasks Section */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3 className={styles.tasksSectionTitle}>
@@ -269,7 +257,7 @@ const DashboardPage: React.FC = () => {
                     disabled={isLoading}
                     className={styles.taskItemButton}
                   >
-                    🤖 Estimer via IA
+                     Estimer via IA
                   </button>
                 </div>
               ))}
@@ -282,7 +270,6 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* AI Result */}
         {estimationResult && (
           <div className={styles.aiResult}>
             <h3 className={styles.aiResultTitle}>✅ Résultat de l'Estimation IA</h3>
