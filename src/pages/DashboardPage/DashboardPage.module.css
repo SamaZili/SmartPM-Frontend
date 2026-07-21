@@ -170,8 +170,10 @@
 }
 
 .statValuePrimary {
-  composes: statValue;
+  font-size: 2.5rem;
+  font-weight: bold;
   color: #10b981;
+  margin: 0;
 }
 
 /* Messages */
@@ -380,8 +382,11 @@
 }
 
 .projectCardSelected {
-  composes: projectCard;
   border: 2px solid #10b981;
+  padding: 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   background-color: #f0fdf4;
 }
 
