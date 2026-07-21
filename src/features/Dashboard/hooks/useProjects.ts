@@ -28,7 +28,7 @@ export function useProjects() {
     try {
       const response = await dashboardApi.createProject(data);
       if (response.success && response.data) {
-        setProjects(prev => [...prev, response.data]);
+        setProjects(prev => [...prev, response.data!]);
         return response.data;
       }
     } catch (err: any) {
@@ -40,7 +40,7 @@ export function useProjects() {
     try {
       const response = await dashboardApi.updateProject(id, data);
       if (response.success && response.data) {
-        setProjects(prev => prev.map(p => p.id === id ? response.data : p));
+        setProjects(prev => prev.map(p => p.id === id ? response.data! : p));
         return response.data;
       }
     } catch (err: any) {

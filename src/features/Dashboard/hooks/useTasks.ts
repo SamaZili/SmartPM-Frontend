@@ -60,7 +60,7 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     try {
       const response = await dashboardApi.createTask(projectId, data);
       if (response.success && response.data) {
-        setTasks(prev => [...prev, response.data]);
+        setTasks(prev => [...prev, response.data!]);
         return response.data;
       }
     } catch (err: any) {
@@ -72,7 +72,7 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     try {
       const response = await dashboardApi.updateTaskStatus(projectId, taskId, data);
       if (response.success && response.data) {
-        setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
+        setTasks(prev => prev.map(t => t.id === taskId ? response.data! : t));
         return response.data;
       }
     } catch (err: any) {
