@@ -12,9 +12,6 @@ const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    current_password: '',
-    new_password: '',
-    new_password_confirmation: '',
   });
 
   useEffect(() => {
@@ -22,9 +19,6 @@ const ProfilePage: React.FC = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        current_password: '',
-        new_password: '',
-        new_password_confirmation: '',
       });
     }
   }, [user]);
@@ -32,26 +26,9 @@ const ProfilePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.new_password && formData.new_password !== formData.new_password_confirmation) {
-      showMessage('Les mots de passe ne correspondent pas', 5000, 'error');
-      return;
-    }
-
-    const updateData: any = {
-      name: formData.name,
-      email: formData.email,
-    };
-
-    if (formData.new_password) {
-      updateData.current_password = formData.current_password;
-      updateData.new_password = formData.new_password;
-      updateData.new_password_confirmation = formData.new_password_confirmation;
-    }
-    
     try {
-      await updateProfile(updateData);
+      await updateProfile(formData);
       showMessage('Profil mis à jour avec succès !');
-      setFormData(prev => ({ ...prev, current_password: '', new_password: '', new_password_confirmation: '' }));
     } catch (err: any) {
       showMessage(err.message || 'Erreur', 5000, 'error');
     }
@@ -64,25 +41,23 @@ const ProfilePage: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <div className={styles.logo}><span>S</span></div>
-          <h1>SmartPM</h1>
+        <div className={styles.logoContainer}>
+          <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
+          <h1 className={styles.logoText}>SmartPM</h1>
         </div>
         
-        <nav className={styles.nav}>
-          <button onClick={() => navigate('/dashboard')} className={styles.navItem}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navItem}>📁 Projets</button>
-          <button onClick={() => navigate('/tasks')} className={styles.navItem}>✅ Tâches</button>
-          <button className={`${styles.navItem} ${styles.active}`}>👤 Profil</button>
+        <nav className={styles.navMenu}>
+          <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+          <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
         </nav>
 
-        <div className={styles.userSection}>
-          <div className={styles.userInfo}>
-            <div className={styles.avatar}>AT</div>
-            <div>
-              <p className={styles.userName}>Admin Test</p>
-              <p className={styles.userRole}>Chef de projet</p>
-            </div>
+        <div className={styles.userInfo}>
+          <div className={styles.userAvatar}>AT</div>
+          <div className={styles.userDetails}>
+            <p className={styles.userName}>Admin Test</p>
+            <p className={styles.userRole}>Chef de projet</p>
           </div>
           <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
             Déconnexion
@@ -128,39 +103,6 @@ const ProfilePage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
-                />
-              </div>
-            </div>
-
-            <div className={styles.formSection}>
-              <h3>Sécurité</h3>
-              <div className={styles.formGroup}>
-                <label>Mot de passe actuel <span className={styles.optional}>(pour changer)</span></label>
-                <input
-                  type="password"
-                  value={formData.current_password}
-                  onChange={(e) => setFormData({...formData, current_password: e.target.value})}
-                  placeholder="Laissez vide si inchangé"
-                />
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label>Nouveau mot de passe</label>
-                <input
-                  type="password"
-                  value={formData.new_password}
-                  onChange={(e) => setFormData({...formData, new_password: e.target.value})}
-                  placeholder="Minimum 8 caractères"
-                  minLength={8}
-                />
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label>Confirmation</label>
-                <input
-                  type="password"
-                  value={formData.new_password_confirmation}
-                  onChange={(e) => setFormData({...formData, new_password_confirmation: e.target.value})}
                 />
               </div>
             </div>

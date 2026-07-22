@@ -72,25 +72,23 @@ const TasksPage: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <div className={styles.logo}><span>S</span></div>
-          <h1>SmartPM</h1>
+        <div className={styles.logoContainer}>
+          <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
+          <h1 className={styles.logoText}>SmartPM</h1>
         </div>
         
-        <nav className={styles.nav}>
-          <button onClick={() => navigate('/dashboard')} className={styles.navItem}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navItem}>📁 Projets</button>
-          <button className={`${styles.navItem} ${styles.active}`}>✅ Tâches</button>
-          <button onClick={() => navigate('/profile')} className={styles.navItem}>👤 Profil</button>
+        <nav className={styles.navMenu}>
+          <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
+          <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
 
-        <div className={styles.userSection}>
-          <div className={styles.userInfo}>
-            <div className={styles.avatar}>AT</div>
-            <div>
-              <p className={styles.userName}>Admin Test</p>
-              <p className={styles.userRole}>Chef de projet</p>
-            </div>
+        <div className={styles.userInfo}>
+          <div className={styles.userAvatar}>AT</div>
+          <div className={styles.userDetails}>
+            <p className={styles.userName}>Admin Test</p>
+            <p className={styles.userRole}>Chef de projet</p>
           </div>
           <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
             Déconnexion

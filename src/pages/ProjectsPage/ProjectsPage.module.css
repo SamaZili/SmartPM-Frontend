@@ -1,60 +1,154 @@
-/* Formulaires */
-.formInput {
-  flex: 1;
-  min-width: 200px;
-  padding: 0.875rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+.pageContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.formInput:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.formSelect {
-  padding: 0.875rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
+.sidebar {
+  width: 280px;
   background-color: white;
+  border-right: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.navButton {
+  padding: 0.875rem 1rem;
+  background-color: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
   cursor: pointer;
-  transition: border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
 }
 
-.formSelect:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+.navButton:hover {
+  background-color: #f1f5f9;
 }
 
-.addButton {
-  padding: 0.875rem 1.5rem;
+.navButtonActive {
+  background-color: #f0fdf4;
+  color: #166534;
+  font-weight: 600;
+}
+
+.userInfo {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  margin: 0;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.userRole {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.logoutBtn {
+  padding: 0.5rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.pageTitle {
+  color: #1e293b;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.primaryBtn {
+  padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  white-space: nowrap;
+  font-size: 1rem;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
-.addButton:hover {
+.primaryBtn:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
 }
 
-.addButton:active {
-  transform: translateY(0);
+.secondaryBtn {
+  padding: 0.75rem 1.5rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-/* Project Card */
+.projectsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
 .projectCard {
   border: 1px solid #e2e8f0;
   padding: 1.5rem;
@@ -69,16 +163,6 @@
   transform: translateY(-2px);
 }
 
-.projectCardSelected {
-  border: 2px solid #10b981;
-  padding: 1.5rem;
-  border-radius: 12px;
-  background-color: #f0fdf4;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
-}
-
 .projectCardHeader {
   display: flex;
   justify-content: space-between;
@@ -89,7 +173,7 @@
 .projectCardIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background-color: #10b981;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -117,14 +201,8 @@
   word-break: break-word;
 }
 
-.projectCardId {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
 .projectCardDescription {
-  margin: 0.5rem 0 1rem 0;
+  margin: 0;
   font-size: 0.875rem;
   color: #64748b;
   line-height: 1.5;
@@ -151,12 +229,6 @@
 
 .editButton:hover {
   background-color: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-}
-
-.editButton:active {
-  transform: translateY(0);
 }
 
 .deleteButton {
@@ -173,25 +245,36 @@
 
 .deleteButton:hover {
   background-color: #dc2626;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-.deleteButton:active {
-  transform: translateY(0);
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.emptyState {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: #64748b;
-  background-color: #f8fafc;
+.modalContent {
+  background-color: white;
   border-radius: 12px;
-  border: 2px dashed #e2e8f0;
-  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
 }
 
-/* Messages */
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
 .errorMessage {
   color: #dc2626;
   background-color: #fef2f2;
@@ -208,36 +291,4 @@
   border-radius: 8px;
   margin-bottom: 1rem;
   border: 1px solid #bbf7d0;
-}/* --- NOUVEAU LOGO PROFESSIONNEL --- */
-.logoContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-}
-
-.logoIcon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
-}
-
-.logoLetter {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.logoText {
-  color: #1e293b;
-  font-size: 1.5rem;
-  margin: 0;
-  font-weight: 800;
-  letter-spacing: -0.5px;
 }

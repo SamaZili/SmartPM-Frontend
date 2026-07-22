@@ -1,44 +1,48 @@
 .pageContainer {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background: var(--gray-50);
   display: flex;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .sidebar {
   width: 260px;
-  background-color: white;
-  border-right: 1px solid #e2e8f0;
+  background: white;
+  border-right: 1px solid var(--gray-200);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
 }
 
-.sidebarHeader {
+/* --- LOGO MODERNE --- */
+.logoContainer {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 2.5rem;
 }
-
-.sidebarLogo {
-  width: 40px;
-  height: 40px;
-  background-color: #10b981;
+.logoIcon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+.logoLetter {
   color: white;
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
-
-.sidebarTitle {
-  color: #10b981;
+.logoText {
+  color: var(--gray-800);
   font-size: 1.5rem;
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .navMenu {
@@ -47,11 +51,10 @@
   gap: 0.5rem;
   flex: 1;
 }
-
 .navButton {
   padding: 0.875rem 1rem;
-  background-color: transparent;
-  color: #64748b;
+  background: transparent;
+  color: var(--gray-600);
   border: none;
   border-radius: 8px;
   text-align: left;
@@ -62,30 +65,27 @@
   font-size: 0.875rem;
   transition: all 0.2s;
 }
-
 .navButton:hover {
-  background-color: #f1f5f9;
+  background: var(--gray-100);
 }
-
 .navButtonActive {
-  background-color: #f0fdf4;
-  color: #166534;
+  background: var(--gray-50);
+  color: var(--primary);
   font-weight: 600;
 }
 
 .userInfo {
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
   gap: 1rem;
 }
-
 .userAvatar {
   width: 40px;
   height: 40px;
-  background-color: #10b981;
+  background: var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -93,27 +93,23 @@
   color: white;
   font-weight: bold;
 }
-
 .userDetails {
   flex: 1;
 }
-
 .userName {
   margin: 0;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 0.875rem;
 }
-
 .userRole {
   margin: 0;
-  color: #64748b;
+  color: var(--gray-600);
   font-size: 0.75rem;
 }
-
 .logoutBtn {
   padding: 0.5rem;
-  background-color: #ef4444;
+  background: var(--danger);
   color: white;
   border: none;
   border-radius: 6px;
@@ -128,91 +124,68 @@
 }
 
 .pageTitle {
-  color: #1e293b;
+  color: var(--gray-800);
   margin: 0 0 2rem 0;
   font-size: 1.875rem;
   font-weight: 700;
 }
 
+/* Statistiques */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
-
 .statCard {
-  background-color: white;
+  background: white;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
 }
-
 .statLabel {
-  color: #64748b;
+  color: var(--gray-600);
   margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
   font-weight: 500;
 }
-
 .statValue {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #1e293b;
+  color: var(--gray-800);
   margin: 0;
 }
-
 .statValuePrimary {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #10b981;
+  color: var(--primary);
   margin: 0;
 }
 
-.errorMessage {
-  color: #dc2626;
-  background-color: #fef2f2;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #fecaca;
-}
-
-.successMessage {
-  color: #166534;
-  background-color: #f0fdf4;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #bbf7d0;
-}
-
+/* Graphique */
 .chartSection {
-  background-color: white;
+  background: white;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   margin-bottom: 2rem;
 }
-
 .chartTitle {
   margin: 0 0 1.5rem 0;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 1.25rem;
   font-weight: 600;
 }
-
 .chartContainer {
   display: flex;
   align-items: flex-end;
   gap: 2rem;
   height: 250px;
   padding-bottom: 2rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--gray-200);
 }
-
 .chartBar {
   flex: 1;
   display: flex;
@@ -220,7 +193,6 @@
   align-items: center;
   gap: 0.5rem;
 }
-
 .chartBarFill {
   width: 100%;
   max-width: 120px;
@@ -234,163 +206,80 @@
   font-weight: bold;
   font-size: 1.25rem;
 }
-
 .chartBarLabel {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--gray-600);
   font-weight: 500;
 }
 
-.estimationHistory {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-.estimationHistoryTitle {
-  margin: 0 0 1.5rem 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.estimationEmpty {
-  color: #64748b;
-  text-align: center;
-  padding: 2rem;
-}
-
-.estimationList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.estimationItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background-color: #f0fdf4;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-}
-
-.estimationInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.estimationId {
-  color: #166534;
-  font-weight: bold;
-}
-
-.estimationDate {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-.estimationResult {
-  text-align: right;
-}
-
-.estimationEffort {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #10b981;
-}
-
-.estimationConfidence {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
+/* Projets */
 .projectsSection {
-  background-color: white;
+  background: white;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   margin-bottom: 2rem;
 }
-
 .projectsSectionTitle {
   margin: 0 0 1.5rem 0;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 1.25rem;
   font-weight: 600;
 }
-
 .projectForm {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
 }
-
 .projectForm input {
   flex: 1;
   padding: 0.875rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   border-radius: 8px;
   font-size: 1rem;
 }
-
 .projectForm button {
   padding: 0.875rem 1.5rem;
-  background-color: #10b981;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
 }
-
 .projectsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
-
 .projectCard {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   padding: 1.5rem;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: white;
+  background: white;
 }
-
 .projectCard:hover {
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
-
 .projectCardSelected {
-  border: 2px solid #10b981;
+  border: 2px solid var(--primary);
   padding: 1.5rem;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: #f0fdf4;
+  background: var(--gray-50);
 }
-
 .projectCardHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
 }
-
 .projectCardIcon {
   width: 48px;
   height: 48px;
-  background-color: #10b981;
+  background: var(--primary);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -399,68 +288,58 @@
   font-size: 1.5rem;
   font-weight: bold;
 }
-
 .projectCardBadge {
   padding: 0.375rem 0.875rem;
-  background-color: #10b981;
+  background: var(--primary);
   color: white;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
 }
-
 .projectCardTitle {
   margin: 0 0 0.5rem 0;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 1.125rem;
   font-weight: 600;
 }
-
 .projectCardId {
   margin: 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--gray-600);
 }
 
+/* Tâches */
 .tasksSection {
-  background-color: white;
+  background: white;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   margin-bottom: 2rem;
 }
-
 .tasksSectionTitle {
   margin: 0 0 1.5rem 0;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 1.25rem;
   font-weight: 600;
 }
-
-.tasksSectionTitle span {
-  color: #10b981;
-}
-
 .taskForm {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 2rem;
 }
-
 .taskForm input,
 .taskForm textarea {
   padding: 0.875rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   border-radius: 8px;
   font-size: 1rem;
   resize: vertical;
 }
-
 .taskForm button {
   padding: 0.875rem 1.5rem;
-  background-color: #3b82f6;
+  background: var(--secondary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -468,161 +347,129 @@
   font-weight: 600;
   align-self: flex-start;
 }
-
 .taskList {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
 .taskItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--gray-200);
   border-radius: 8px;
-  background-color: #f8fafc;
+  background: var(--gray-50);
   gap: 1rem;
 }
-
 .taskItemContent {
   flex: 1;
   min-width: 0;
 }
-
 .taskItemTitle {
   margin: 0 0 0.5rem 0;
-  color: #1e293b;
+  color: var(--gray-800);
   font-size: 1rem;
   font-weight: 600;
   word-break: break-word;
 }
-
 .taskItemDescription {
   margin: 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--gray-600);
   line-height: 1.5;
 }
-
-/* 🔴 BOUTON ESTIMER VIA IA - LE CŒUR DU PROJET */
 .estimateButton {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
 }
-
 .estimateButton:hover:not(:disabled) {
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(139, 92, 246, 0.4);
 }
-
 .estimateButton:active:not(:disabled) {
   transform: translateY(0);
 }
-
 .estimateButton:disabled {
   background: #94a3b8;
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
 }
-
 .taskEmpty {
   text-align: center;
   padding: 2rem;
-  color: #64748b;
-  background-color: #f8fafc;
+  color: var(--gray-600);
+  background: var(--gray-50);
   border-radius: 8px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--gray-200);
 }
 
-/* AI Result */
+/* Résultat IA */
 .aiResult {
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   color: #166534;
   padding: 2rem;
   border-radius: 12px;
-  border: 2px solid #10b981;
+  border: 2px solid var(--primary);
   margin-bottom: 2rem;
   margin-top: 1rem;
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
 }
-
 .aiResultTitle {
   margin: 0 0 1.5rem 0;
   font-size: 1.25rem;
   font-weight: 600;
 }
-
 .aiResultContent {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 }
-
 .aiResultInfo p {
   margin: 0.75rem 0;
   font-size: 1.25rem;
   font-weight: 600;
 }
-
 .aiResultInfo span {
   color: #15803d;
 }
-
 .aiResultDate {
   text-align: right;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
-
 .aiResultDate p {
   margin: 0.5rem 0;
   font-size: 0.875rem;
   color: #15803d;
 }
-/* --- NOUVEAU LOGO PROFESSIONNEL --- */
-.logoContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-}
 
-.logoIcon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+/* Messages */
+.errorMessage {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
 }
-
-.logoLetter {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.logoText {
-  color: #1e293b;
-  font-size: 1.5rem;
-  margin: 0;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+.successMessage {
+  color: #166534;
+  background-color: #f0fdf4;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #bbf7d0;
 }
