@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../../features/Projects/hooks/useProjects';
+import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Project } from '../../types';
 import styles from './ProjectsPage.module.css';
 
 const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Récupération de l'utilisateur connecté
   const { projects, addProject, updateProject, removeProject } = useProjects();
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -24,14 +26,14 @@ const ProjectsPage: React.FC = () => {
     try {
       if (editingProject) {
         await updateProject(editingProject.id, { ...formData, description: formData.description || undefined });
-        showMessage('Projet mis à jour !');
+        showMessage('Projet mis à jour avec succès !');
       } else {
         await addProject({ ...formData, description: formData.description || undefined });
-        showMessage('Projet créé !');
+        showMessage('Projet créé avec succès !');
       }
       resetForm();
     } catch (err: any) {
-      showMessage(err.message || 'Erreur', 5000, 'error');
+      showMessage(err.message || 'Erreur lors de l\'opération', 5000, 'error');
     }
   };
 
@@ -42,15 +44,25 @@ const ProjectsPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Supprimer ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
         await removeProject(id);
-        showMessage('Projet supprimé !');
+        showMessage('Projet supprimé avec succès !');
       } catch (err: any) {
-        showMessage(err.message || 'Erreur', 5000, 'error');
+        showMessage(err.message || 'Erreur lors de la suppression', 5000, 'error');
       }
     }
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  const userName = user?.name || 'Utilisateur';
+  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
 
   return (
     <div className={styles.pageContainer}>
@@ -68,14 +80,12 @@ const ProjectsPage: React.FC = () => {
         </nav>
 
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>AT</div>
+          <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
-            <p className={styles.userName}>Admin Test</p>
-            <p className={styles.userRole}>Chef de projet</p>
+            <p className={styles.userName}>{userName}</p>
+            <p className={styles.userRole}>{userRole}</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
-            Déconnexion
-          </button>
+          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </aside>
 
@@ -95,7 +105,9 @@ const ProjectsPage: React.FC = () => {
           {projects.map((project: Project) => (
             <div key={project.id} className={styles.projectCard}>
               <div className={styles.projectCardHeader}>
-              <div className={styles.projectCardIcon}>{project.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
+                <div className={styles.projectCardIcon}>
+                  {project.name?.charAt(0)?.toUpperCase() ?? '?'}
+                </div>
                 <span className={styles.projectCardBadge}>{project.status}</span>
               </div>
               <h3 className={styles.projectCardTitle}>{project.name}</h3>
@@ -106,6 +118,9 @@ const ProjectsPage: React.FC = () => {
               </div>
             </div>
           ))}
+          {projects.length === 0 && (
+            <div className={styles.emptyState}>Aucun projet pour le moment. Créez votre premier projet !</div>
+          )}
         </div>
 
         {showModal && (

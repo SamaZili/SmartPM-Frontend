@@ -14,7 +14,6 @@ export function useAuth() {
       
       const payload = JSON.parse(atob(parts[1]));
       
-      // Gérer plusieurs formats possibles
       return {
         id: payload.sub || payload.id || 1,
         name: payload.name || 'Utilisateur',
@@ -40,10 +39,7 @@ export function useAuth() {
         const token = response.data.token;
         localStorage.setItem('token', token);
         
-        // Extraire les infos du token
         const extractedUser = extractUserFromToken(token);
-        
-        // Si le backend retourne aussi l'objet user directement, l'utiliser
         const finalUser = response.data.user || extractedUser;
         
         if (finalUser) {
