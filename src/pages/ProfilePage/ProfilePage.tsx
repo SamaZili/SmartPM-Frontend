@@ -6,7 +6,7 @@ import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateProfile, isLoading, error: apiError } = useProfile();
+  const { user, updateProfile, isLoading } = useProfile();
   const { message, showMessage } = useTemporaryMessage();
   
   const [formData, setFormData] = useState({
@@ -14,7 +14,6 @@ const ProfilePage: React.FC = () => {
     email: '',
   });
 
-  // Charger les données utilisateur
   useEffect(() => {
     if (user) {
       setFormData({
@@ -31,38 +30,14 @@ const ProfilePage: React.FC = () => {
       await updateProfile(formData);
       showMessage('Profil mis à jour avec succès !');
     } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la mise à jour', 5000, 'error');
+      showMessage(err.message || 'Erreur', 5000, 'error');
     }
   };
 
-  // Afficher un loader pendant le chargement
-  if (isLoading || !user) {
+  if (!user) {
     return (
       <div className={styles.pageContainer}>
-        <aside className={styles.sidebar}>
-          <div className={styles.logoContainer}>
-            <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
-            <h1 className={styles.logoText}>SmartPM</h1>
-          </div>
-          <nav className={styles.navMenu}>
-            <button onClick={() => navigate('/dashboard')} className={styles.navButton}> Tableau de bord</button>
-            <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
-            <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-            <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
-          </nav>
-          <div className={styles.userInfo}>
-            <div className={styles.userAvatar}>?</div>
-            <div className={styles.userDetails}>
-              <p className={styles.userName}>Chargement...</p>
-            </div>
-            <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
-              Déconnexion
-            </button>
-          </div>
-        </aside>
-        <main className={styles.mainContent}>
-          <div className={styles.loading}>Chargement du profil...</div>
-        </main>
+        <div className={styles.loading}>Chargement...</div>
       </div>
     );
   }
@@ -88,9 +63,9 @@ const ProfilePage: React.FC = () => {
           <div className={styles.userAvatar}>{initial}</div>
           <div className={styles.userDetails}>
             <p className={styles.userName}>{user.name}</p>
-            <p className={styles.userRole}>Chef de projet</p>
+            <p className={styles.userRole}>{user.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur'}</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
+          <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>
             Déconnexion
           </button>
         </div>
@@ -99,7 +74,6 @@ const ProfilePage: React.FC = () => {
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>Mon Profil</h1>
 
-        {apiError && <div className={styles.errorMessage}>{apiError}</div>}
         {message && <div className={styles.alert}>{message}</div>}
 
         <div className={styles.profileCard}>
@@ -108,6 +82,7 @@ const ProfilePage: React.FC = () => {
             <div>
               <h2>{user.name}</h2>
               <p className={styles.userEmail}>{user.email}</p>
+              <p className={styles.userRole}>{user.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur'}</p>
             </div>
           </div>
 
