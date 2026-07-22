@@ -2,7 +2,6 @@
   display: flex;
   min-height: 100vh;
   background-color: #f8fafc;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .sidebar {
@@ -19,7 +18,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 2.5rem;
 }
 
 .logoIcon {
@@ -30,14 +28,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
 }
 
 .logoLetter {
   color: white;
   font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -1px;
 }
 
 .logoText {
@@ -45,7 +41,6 @@
   font-size: 1.5rem;
   margin: 0;
   font-weight: 800;
-  letter-spacing: -0.5px;
 }
 
 .navMenu {
@@ -57,15 +52,12 @@
 
 .navButton {
   padding: 0.875rem 1rem;
-  background-color: transparent;
-  color: #64748b;
+  background: none;
   border: none;
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  color: #64748b;
   font-size: 0.875rem;
   transition: all 0.2s;
 }
@@ -151,92 +143,65 @@
 }
 
 .profileCard {
-  background-color: white;
+  background: white;
   border-radius: 12px;
+  padding: 2rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
-  max-width: 800px;
+  max-width: 600px;
 }
 
 .profileHeader {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .profileAvatar {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: bold;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
 }
 
 .profileHeader h2 {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   color: #1e293b;
   font-size: 1.5rem;
 }
 
 .userEmail {
-  margin: 0 0 0.5rem 0;
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.profileForm {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.formSection {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.formSection h3 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.hint {
   margin: 0;
   color: #64748b;
   font-size: 0.875rem;
-  font-style: italic;
 }
 
 .formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
   color: #374151;
   font-size: 0.875rem;
 }
 
 .formGroup input {
+  width: 100%;
   padding: 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
-  transition: all 0.2s;
 }
 
 .formGroup input:focus {
@@ -246,7 +211,8 @@
 }
 
 .primaryBtn {
-  padding: 0.875rem 1.5rem;
+  width: 100%;
+  padding: 0.875rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
@@ -254,29 +220,16 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 1rem;
-  transition: all 0.2s;
-  align-self: flex-start;
 }
 
-.primaryBtn:hover:not(:disabled) {
+.primaryBtn:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
-}
-
-.primaryBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .alert {
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
-  font-weight: 500;
-}
-
-.alert:not(:empty) {
   background-color: #f0fdf4;
   color: #166534;
   border: 1px solid #bbf7d0;
