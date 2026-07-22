@@ -8,60 +8,52 @@ import styles from './ProjectsPage.module.css';
 const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects, addProject, updateProject, removeProject } = useProjects();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newStatus, setNewStatus] = useState('en_cours');
+  const [showModal, setShowModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    status: 'en_cours',
+  });
   const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
 
-  const handleAddProject = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({ name: '', description: '', status: 'en_cours' });
+    setEditingProject(null);
+    setShowModal(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) {
-      showMessage('Veuillez entrer un nom de projet', 3000, 'error');
-      return;
-    }
     
     try {
-      await addProject({ 
-        name: newProjectName, 
-        description: newDescription || undefined,
-        status: newStatus
-      });
-      setNewProjectName('');
-      setNewDescription('');
-      setNewStatus('en_cours');
-      showMessage('Projet créé avec succès !');
+      if (editingProject) {
+        await updateProject(editingProject.id, formData);
+        showMessage('Projet mis à jour avec succès !');
+      } else {
+        await addProject(formData);
+        showMessage('Projet créé avec succès !');
+      }
+      resetForm();
     } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la création.', 5000, 'error');
+      showMessage(err.message || 'Erreur lors de l\'opération.', 5000, 'error');
     }
   };
 
-  const handleEditProject = async (project: Project) => {
-    const newName = prompt('Nouveau nom du projet:', project.name);
-    if (!newName) return;
-    
-    const rawDescription = prompt('Nouvelle description:', project.description || '');
-    const newStatus = prompt('Nouveau statut (en_cours, termine, en_pause):', project.status) || 'en_cours';
-    
-    try {
-      await updateProject(project.id, { 
-        name: newName,
-        description: newDescription !== null ? newDescription : undefined, // ✅ CORRECT
-        status: newStatus
-      });
-      showMessage('Projet mis à jour avec succès !');
-    } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la modification.', 5000, 'error');
-    }
+  const handleEdit = (project: Project) => {
+    setEditingProject(project);
+    setFormData({
+      name: project.name,
+      description: project.description || '',
+      status: project.status,
+    });
+    setShowModal(true);
   };
 
-  const handleDeleteProject = async (id: number) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
         await removeProject(id);
-        if (selectedProject?.id === id) {
-          setSelectedProject(null);
-        }
         showMessage('Projet supprimé avec succès !');
       } catch (err: any) {
         showMessage(err.message || 'Erreur lors de la suppression.', 5000, 'error');
@@ -69,115 +61,142 @@ const ProjectsPage: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  const getStatusBadgeClass = (status: string) => {
+    return `${styles.statusBadge} ${styles[`status_${status}`]}`;
   };
 
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.sidebarLogo}>️</div>
-          <h1 className={styles.sidebarTitle}>SmartPM</h1>
+          <div className={styles.logo}>
+            <span>S</span>
+          </div>
+          <h1>SmartPM</h1>
         </div>
         
-        <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>📊 Tableau de bord</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}> Projets</button>
-          <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
-          <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
+        <nav className={styles.nav}>
+          <button onClick={() => navigate('/dashboard')} className={styles.navItem}>
+            📊 Tableau de bord
+          </button>
+          <button className={`${styles.navItem} ${styles.active}`}>
+            📁 Projets
+          </button>
+          <button onClick={() => navigate('/tasks')} className={styles.navItem}>
+            ✅ Tâches
+          </button>
+          <button onClick={() => navigate('/profile')} className={styles.navItem}>
+            👤 Profil
+          </button>
         </nav>
 
-        <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>AT</div>
-          <div className={styles.userDetails}>
-            <p className={styles.userName}>Admin Test</p>
-            <p className={styles.userRole}>Chef de projet</p>
+        <div className={styles.userSection}>
+          <div className={styles.userInfo}>
+            <div className={styles.avatar}>AT</div>
+            <div>
+              <p className={styles.userName}>Admin Test</p>
+              <p className={styles.userRole}>Chef de projet</p>
+            </div>
           </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
+          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
+            Déconnexion
+          </button>
         </div>
       </aside>
 
       <main className={styles.mainContent}>
-        <h2 className={styles.pageTitle}>Gestion des Projets</h2>
+        <div className={styles.header}>
+          <h1>Gestion des Projets</h1>
+          <button onClick={() => setShowModal(true)} className={styles.primaryBtn}>
+            + Nouveau Projet
+          </button>
+        </div>
 
         {successMsg && (
-          <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>
+          <div className={`${styles.alert} ${msgType === 'error' ? styles.alertError : styles.alertSuccess}`}>
             {successMsg}
           </div>
         )}
 
-        <div className={styles.projectsSection}>
-          <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
-          
-          <form onSubmit={handleAddProject} className={styles.projectForm}>
-            <input 
-              type="text" 
-              placeholder="Nom du nouveau projet..." 
-              value={newProjectName} 
-              onChange={(e) => setNewProjectName(e.target.value)} 
-              className={styles.formInput}
-            />
-            <input 
-              type="text" 
-              placeholder="Description..." 
-              value={newDescription} 
-              onChange={(e) => setNewDescription(e.target.value)} 
-              className={styles.formInput}
-            />
-            <select 
-              value={newStatus} 
-              onChange={(e) => setNewStatus(e.target.value)}
-              className={styles.formSelect}
-            >
-              <option value="en_cours">En cours</option>
-              <option value="termine">Terminé</option>
-              <option value="en_pause">En pause</option>
-            </select>
-            <button type="submit" className={styles.addButton}>+ Nouveau projet</button>
-          </form>
-
-          <div className={styles.projectsGrid}>
-            {projects.map((project: Project) => (
-              <div 
-                key={project.id} 
-                className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard}
-                onClick={() => setSelectedProject(project)}
-              >
-                <div className={styles.projectCardHeader}>
-                  <div className={styles.projectCardIcon}>
-                    {project.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className={styles.projectCardBadge}>{project.status}</span>
+        <div className={styles.projectsGrid}>
+          {projects.map((project: Project) => (
+            <div key={project.id} className={styles.projectCard}>
+              <div className={styles.cardHeader}>
+                <div className={styles.projectIcon}>
+                  {project.name.charAt(0).toUpperCase()}
                 </div>
-                <h4 className={styles.projectCardTitle}>{project.name}</h4>
-                <p className={styles.projectCardId}>ID: {project.id}</p>
-                <p className={styles.projectCardDescription}>{project.description || 'Aucune description'}</p>
-                
-                <div className={styles.projectCardActions}>
-                  <button 
-                    onClick={() => handleEditProject(project)}
-                    className={styles.editButton}
-                  >
+                <span className={getStatusBadgeClass(project.status)}>
+                  {project.status === 'en_cours' ? 'En cours' : 
+                   project.status === 'termine' ? 'Terminé' : 'En pause'}
+                </span>
+              </div>
+              
+              <h3 className={styles.projectTitle}>{project.name}</h3>
+              <p className={styles.projectDesc}>{project.description || 'Aucune description'}</p>
+              
+              <div className={styles.cardFooter}>
+                <span className={styles.projectId}>ID: {project.id}</span>
+                <div className={styles.actions}>
+                  <button onClick={() => handleEdit(project)} className={styles.btnEdit}>
                     Modifier
                   </button>
-                  <button 
-                    onClick={() => handleDeleteProject(project.id)}
-                    className={styles.deleteButton}
-                  >
+                  <button onClick={() => handleDelete(project.id)} className={styles.btnDelete}>
                     Supprimer
                   </button>
                 </div>
               </div>
-            ))}
-            {projects.length === 0 && (
-              <div className={styles.emptyState}>
-                Aucun projet pour le moment. Créez votre premier projet !
-              </div>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
+
+        {showModal && (
+          <div className={styles.modal}>
+            <div className={styles.modalContent}>
+              <h2>{editingProject ? 'Modifier le projet' : 'Nouveau projet'}</h2>
+              <form onSubmit={handleSubmit}>
+                <div className={styles.formGroup}>
+                  <label>Nom du projet</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Statut</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  >
+                    <option value="en_cours">En cours</option>
+                    <option value="termine">Terminé</option>
+                    <option value="en_pause">En pause</option>
+                  </select>
+                </div>
+                
+                <div className={styles.modalActions}>
+                  <button type="button" onClick={resetForm} className={styles.secondaryBtn}>
+                    Annuler
+                  </button>
+                  <button type="submit" className={styles.primaryBtn}>
+                    {editingProject ? 'Mettre à jour' : 'Créer'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

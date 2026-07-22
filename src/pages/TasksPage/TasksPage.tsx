@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../../features/Projects/hooks/useProjects';
 import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { Project, Task } from '../../types';
+import { Project, Task, Estimation } from '../../types';
+import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
 import styles from './TasksPage.module.css';
 
 const TasksPage: React.FC = () => {
@@ -11,190 +12,209 @@ const TasksPage: React.FC = () => {
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask, updateTaskStatus } = useTasks(projects, selectedProject?.id || null);
-  const [newTaskName, setNewTaskName] = useState('');
-  const [newTaskDesc, setNewTaskDesc] = useState('');
-  const [newTaskStatus, setNewTaskStatus] = useState('a_faire');
-  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
+  const [estimations, setEstimations] = useState<Record<number, Estimation>>({});
+  const [loadingEstimates, setLoadingEstimates] = useState<Set<number>>(new Set());
+  const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
+  const { message, showMessage } = useTemporaryMessage();
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProject || !newTaskName.trim()) {
-      showMessage('Veuillez sélectionner un projet et entrer un nom de tâche', 3000, 'error');
+    if (!selectedProject || !newTask.name.trim()) {
+      showMessage('Veuillez remplir tous les champs', 3000, 'error');
       return;
     }
-    
+
     try {
       await addTask(selectedProject.id, {
-        name: newTaskName,
-        description: newTaskDesc || undefined,
-        status: newTaskStatus,
+        name: newTask.name,
+        description: newTask.description || undefined,
+        status: newTask.status,
         complexity: 'moyenne',
       });
-      setNewTaskName('');
-      setNewTaskDesc('');
-      setNewTaskStatus('a_faire');
+      setNewTask({ name: '', description: '', status: 'a_faire' });
       showMessage('Tâche ajoutée avec succès !');
     } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la création.', 5000, 'error');
+      showMessage(err.message || 'Erreur', 5000, 'error');
     }
   };
 
-  const handleUpdateStatus = async (task: Task, newStatus: string) => {
+  const handleEstimate = async (taskId: number) => {
     if (!selectedProject) return;
+    
+    setLoadingEstimates(prev => new Set(prev).add(taskId));
+    
     try {
-      await updateTaskStatus(selectedProject.id, task.id, { status: newStatus });
-      showMessage('Statut mis à jour avec succès !');
+      const response = await dashboardApi.estimateTask(selectedProject.id, taskId);
+      if (response.success && response.data) {
+        setEstimations(prev => ({ ...prev, [taskId]: response.data! }));
+        showMessage('Estimation IA générée !');
+      }
     } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la mise à jour.', 5000, 'error');
+      showMessage(err.response?.data?.message || 'Erreur lors de l\'estimation', 5000, 'error');
+    } finally {
+      setLoadingEstimates(prev => {
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'a_faire': return '#94a3b8';
-      case 'en_cours': return '#f59e0b';
-      case 'terminee': return '#10b981';
-      default: return '#64748b';
-    }
+    const colors: Record<string, string> = {
+      a_faire: '#94a3b8',
+      en_cours: '#f59e0b',
+      terminee: '#10b981',
+    };
+    return colors[status] || '#64748b';
   };
 
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.sidebarLogo}>️</div>
-          <h1 className={styles.sidebarTitle}>SmartPM</h1>
+          <div className={styles.logo}><span>S</span></div>
+          <h1>SmartPM</h1>
         </div>
         
-        <nav className={styles.navMenu}>
-          <button className={styles.navButton} onClick={() => navigate('/dashboard')}>📊 Tableau de bord</button>
-          <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
-          <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
+        <nav className={styles.nav}>
+          <button onClick={() => navigate('/dashboard')} className={styles.navItem}>📊 Tableau de bord</button>
+          <button onClick={() => navigate('/projects')} className={styles.navItem}>📁 Projets</button>
+          <button className={`${styles.navItem} ${styles.active}`}>✅ Tâches</button>
+          <button onClick={() => navigate('/profile')} className={styles.navItem}>👤 Profil</button>
         </nav>
 
-        <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>AT</div>
-          <div className={styles.userDetails}>
-            <p className={styles.userName}>Admin Test</p>
-            <p className={styles.userRole}>Chef de projet</p>
+        <div className={styles.userSection}>
+          <div className={styles.userInfo}>
+            <div className={styles.avatar}>AT</div>
+            <div>
+              <p className={styles.userName}>Admin Test</p>
+              <p className={styles.userRole}>Chef de projet</p>
+            </div>
           </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
+          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
+            Déconnexion
+          </button>
         </div>
       </aside>
 
       <main className={styles.mainContent}>
-        <h2 className={styles.pageTitle}>Gestion des Tâches</h2>
+        <h1 className={styles.pageTitle}>Gestion des Tâches</h1>
 
-        {successMsg && (
-          <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>
-            {successMsg}
-          </div>
+        {message && (
+          <div className={styles.alert}>{message}</div>
         )}
 
-        <div className={styles.projectsSection}>
-          <h3 className={styles.projectsSectionTitle}>📁 Sélectionnez un projet</h3>
-          
+        <section className={styles.section}>
+          <h2>Sélectionnez un projet</h2>
           <div className={styles.projectsGrid}>
             {projects.map((project: Project) => (
-              <div 
-                key={project.id} 
-                className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard}
+              <div
+                key={project.id}
+                className={`${styles.projectCard} ${selectedProject?.id === project.id ? styles.selected : ''}`}
                 onClick={() => setSelectedProject(project)}
               >
-                <div className={styles.projectCardHeader}>
-                  <div className={styles.projectCardIcon}>
-                    {project.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className={styles.projectCardBadge}>{project.status}</span>
-                </div>
-                <h4 className={styles.projectCardTitle}>{project.name}</h4>
-                <p className={styles.projectCardId}>ID: {project.id}</p>
-                <p className={styles.projectCardDescription}>{project.description || 'Aucune description'}</p>
+                <div className={styles.projectIcon}>{project.name.charAt(0).toUpperCase()}</div>
+                <h3>{project.name}</h3>
+                <p className={styles.projectDesc}>{project.description || 'Aucune description'}</p>
+                <span className={styles.statusBadge}>{project.status}</span>
               </div>
             ))}
-            {projects.length === 0 && (
-              <div className={styles.emptyState}>
-                Aucun projet disponible. Créez d'abord un projet !
-              </div>
-            )}
           </div>
-        </div>
+        </section>
 
         {selectedProject && (
-          <div className={styles.tasksSection}>
-            <h3 className={styles.tasksSectionTitle}>
-               Tâches pour : <span>{selectedProject.name}</span>
-            </h3>
+          <section className={styles.section}>
+            <h2>Tâches pour : <span className={styles.highlight}>{selectedProject.name}</span></h2>
             
             <form onSubmit={handleAddTask} className={styles.taskForm}>
-              <input 
-                type="text" 
-                placeholder="Nom de la tâche..." 
-                value={newTaskName} 
-                onChange={(e) => setNewTaskName(e.target.value)} 
+              <input
+                type="text"
+                placeholder="Nom de la tâche..."
+                value={newTask.name}
+                onChange={(e) => setNewTask({...newTask, name: e.target.value})}
                 required
-                className={styles.formInput}
               />
-              <textarea 
-                placeholder="Description (importante pour l'IA)..." 
-                value={newTaskDesc} 
-                onChange={(e) => setNewTaskDesc(e.target.value)} 
-                className={styles.formTextarea}
+              <textarea
+                placeholder="Description (importante pour l'IA)..."
+                value={newTask.description}
+                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                rows={2}
               />
-              <select 
-                value={newTaskStatus} 
-                onChange={(e) => setNewTaskStatus(e.target.value)}
-                className={styles.formSelect}
+              <select
+                value={newTask.status}
+                onChange={(e) => setNewTask({...newTask, status: e.target.value})}
               >
                 <option value="a_faire">À faire</option>
                 <option value="en_cours">En cours</option>
                 <option value="terminee">Terminée</option>
               </select>
-              <button type="submit" className={styles.addButton}>+ Ajouter une tâche</button>
+              <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
-            <div className={styles.taskList}>
+            <div className={styles.tasksList}>
               {tasks.map((task: Task) => (
-                <div key={task.id} className={styles.taskItem}>
-                  <div className={styles.taskItemContent}>
-                    <h4 className={styles.taskItemTitle}>{task.name}</h4>
-                    <p className={styles.taskItemDescription}>
-                      {task.description || 'Aucune description'}
-                    </p>
+                <div key={task.id} className={styles.taskCard}>
+                  <div className={styles.taskHeader}>
+                    <h4>{task.name}</h4>
                     <span 
-                      className={styles.statusBadge}
+                      className={styles.taskStatus}
                       style={{ backgroundColor: getStatusColor(task.status) }}
                     >
                       {task.status}
                     </span>
                   </div>
                   
+                  <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
+                  
                   <div className={styles.taskActions}>
-                    <select 
+                    <select
                       value={task.status}
-                      onChange={(e) => handleUpdateStatus(task, e.target.value)}
+                      onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })}
                       className={styles.statusSelect}
                     >
                       <option value="a_faire">À faire</option>
                       <option value="en_cours">En cours</option>
                       <option value="terminee">Terminée</option>
                     </select>
+                    
+                    <button
+                      onClick={() => handleEstimate(task.id)}
+                      disabled={loadingEstimates.has(task.id)}
+                      className={styles.aiBtn}
+                    >
+                      {loadingEstimates.has(task.id) ? '⏳ Estimation...' : '🤖 Estimer via IA'}
+                    </button>
                   </div>
+
+                  {estimations[task.id] && (
+                    <div className={styles.estimationResult}>
+                      <div className={styles.estimationHeader}>
+                        <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
+                        <span className={styles.estimationDate}>
+                          {new Date(estimations[task.id].created_at).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
+                      <div className={styles.estimationGrid}>
+                        <div className={styles.estimationItem}>
+                          <span className={styles.estimationLabel}>Effort estimé</span>
+                          <span className={styles.estimationValue}>
+                            {estimations[task.id].predicted_effort} heures
+                          </span>
+                        </div>
+                        <div className={styles.estimationItem}>
+                          <span className={styles.estimationLabel}>Confiance IA</span>
+                          <span className={styles.estimationValue}>
+                            {Math.round(estimations[task.id].confidence_score * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
-              {tasks.length === 0 && (
-                <div className={styles.emptyState}>
-                  Aucune tâche pour ce projet. Ajoutez une tâche pour commencer !
-                </div>
-              )}
             </div>
-          </div>
+          </section>
         )}
       </main>
     </div>
