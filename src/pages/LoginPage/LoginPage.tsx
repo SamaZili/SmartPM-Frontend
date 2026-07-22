@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { LoginDto } from '../../features/Auth/api/authApi';
 import styles from './LoginPage.module.css';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, isLoading, error } = useAuth();
   
-  const [formData, setFormData] = useState<LoginDto>({
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
@@ -82,11 +81,18 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
             Pas encore de compte ?{' '}
             <Link to="/register" style={{ color: '#10b981', textDecoration: 'none', fontWeight: '600' }}>
               Créer un compte
+            </Link>
+          </p>
+          
+          {/* 🔗 LIEN MOT DE PASSE OUBLIÉ */}
+          <p style={{ marginTop: '0.75rem' }}>
+            <Link to="/forgot-password" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '0.875rem' }}>
+              Mot de passe oublié ?
             </Link>
           </p>
         </div>

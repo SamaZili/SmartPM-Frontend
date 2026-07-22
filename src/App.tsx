@@ -1,33 +1,27 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
-import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage'; // Si tu l'as mis dans un dossier
+import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage'; // ⬅️ AJOUTER ÇA
 import DashboardPage from './pages/DashboardPage/DashboardPage';
-import ProfilePage from './pages/ProfilePage/ProfilePage';
 import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import TasksPage from './pages/TasksPage/TasksPage';
+import ProfilePage from './pages/ProfilePage/ProfilePage';
 
-// ... le reste de ton code App.tsx reste identique
-
-const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return token ? <>{children}</> : <Navigate to="/login" />;
-};
-
-const App: React.FC = () => {
+function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* <-- AJOUT */}
-      <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
-      <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-      <Route path="/projects" element={<PrivateRoute><ProjectsPage /></PrivateRoute>} />
-      <Route path="/tasks" element={<PrivateRoute><TasksPage /></PrivateRoute>} />
-      <Route path="/" element={<Navigate to="/dashboard" />} />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* ⬅️ AJOUTER ÇA */}
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App;
