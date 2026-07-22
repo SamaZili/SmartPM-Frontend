@@ -141,42 +141,59 @@
   margin-bottom: 1.5rem;
 }
 
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.25rem;
+  color: #64748b;
+}
+
 .profileCard {
   background-color: white;
-  padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
+  max-width: 800px;
 }
 
 .profileHeader {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
+  padding: 2rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .profileAvatar {
-  width: 80px;
-  height: 80px;
-  background-color: #10b981;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2.25rem;
+  font-size: 3rem;
   font-weight: bold;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
 }
 
-.userRole {
-  margin: 0;
+.profileHeader h2 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.userEmail {
+  margin: 0 0 0.5rem 0;
   color: #64748b;
   font-size: 0.875rem;
-  font-weight: 500;
 }
 
 .profileForm {
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -186,6 +203,20 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.formSection h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-style: italic;
 }
 
 .formGroup {
@@ -205,7 +236,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .formGroup input:focus {
@@ -215,7 +246,7 @@
 }
 
 .primaryBtn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
@@ -224,19 +255,29 @@
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.2s;
+  align-self: flex-start;
 }
 
-.primaryBtn:hover {
+.primaryBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
 }
 
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .alert {
-  color: #dc2626;
-  background-color: #fef2f2;
   padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #fecaca;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.alert:not(:empty) {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
 }
