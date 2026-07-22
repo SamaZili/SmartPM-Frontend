@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../../features/Auth/api/authApi';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import styles from './ResetPasswordPage.module.css';
@@ -14,9 +14,7 @@ const ResetPasswordPage: React.FC = () => {
     password_confirmation: '',
   });
   
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { message, showMessage } = useTemporaryMessage();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,39 +22,37 @@ const ResetPasswordPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsLoading(true);
+    
+    if (!token) {
+      showMessage('Token de r√©initialisation manquant', 5000, 'error');
+      return;
+    }
 
     if (formData.password !== formData.password_confirmation) {
-      setError('Les mots de passe ne correspondent pas.');
-      setIsLoading(false);
+      showMessage('Les mots de passe ne correspondent pas', 5000, 'error');
       return;
     }
 
-    if (!token) {
-      setError('Token de rÈinitialisation manquant.');
-      setIsLoading(false);
+    if (formData.password.length < 8) {
+      showMessage('Le mot de passe doit contenir au moins 8 caract√®res', 5000, 'error');
       return;
     }
+
+    setIsLoading(true);
 
     try {
-      const response = await authApi.resetPassword({
+      await authApi.resetPassword({
         token,
         password: formData.password,
         password_confirmation: formData.password_confirmation,
       });
-
-      if (response.success) {
-        setSuccess('Mot de passe rÈinitialisÈ avec succËs ! Redirection...');
-        setTimeout(() => navigate('/login'), 3000);
-      } else {
-        setError(response.message || 'Erreur lors de la rÈinitialisation.');
-      }
+      
+      showMessage('Mot de passe r√©initialis√© avec succ√®s ! Redirection...');
+      setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Une erreur inattendue est survenue.');
+      showMessage(err.response?.data?.message || 'Erreur lors de la r√©initialisation', 5000, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -65,12 +61,13 @@ const ResetPasswordPage: React.FC = () => {
   if (!token) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.resetCard}>
-          <div style={{ textAlign: 'center' }}>
-            <h2 style={{ color: '#dc2626' }}>Lien invalide</h2>
-            <p style={{ color: '#64748b' }}>Le lien de rÈinitialisation est manquant ou incorrect.</p>
-            <Link to="/login" className={styles.link}>Retour ‡ la connexion</Link>
-          </div>
+        <div className={styles.card}>
+          <div className={styles.errorIcon}>‚ùå</div>
+          <h1>Lien invalide</h1>
+          <p>Le lien de r√©initialisation est manquant ou incorrect.</p>
+          <button onClick={() => navigate('/forgot-password')} className={styles.primaryBtn}>
+            Demander un nouveau lien
+          </button>
         </div>
       </div>
     );
@@ -78,70 +75,58 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.resetCard}>
+      <div className={styles.card}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className={styles.logo}></div>
           <h1 className={styles.title}>SmartPM</h1>
-          <p className={styles.subtitle}>DÈfinissez votre nouveau mot de passe</p>
+          <p className={styles.subtitle}>Nouveau mot de passe</p>
         </div>
 
-        {error && (
-          <div className={styles.errorMessage}>
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className={styles.successMessage}>
-            {success}
-          </div>
-        )}
-        {message && (
-          <div className={styles.errorMessage}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.errorMessage}>{message}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
             <label htmlFor="password">Nouveau mot de passe</label>
-            <input 
-              type="password" 
+            <input
               id="password"
-              name="password" 
-              value={formData.password} 
-              onChange={handleChange} 
-              required 
-              disabled={isLoading} 
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Minimum 8 caract√®res"
+              required
+              disabled={isLoading}
               minLength={8}
             />
           </div>
-          
+
           <div className={styles.inputGroup}>
             <label htmlFor="password_confirmation">Confirmer le mot de passe</label>
-            <input 
-              type="password" 
+            <input
               id="password_confirmation"
-              name="password_confirmation" 
-              value={formData.password_confirmation} 
-              onChange={handleChange} 
-              required 
+              name="password_confirmation"
+              type="password"
+              value={formData.password_confirmation}
+              onChange={handleChange}
+              placeholder="Confirmez votre nouveau mot de passe"
+              required
               disabled={isLoading}
             />
           </div>
-          
+
           <button 
             type="submit" 
             className={styles.submitButton}
             disabled={isLoading}
           >
-            {isLoading ? 'RÈinitialisation...' : 'RÈinitialiser le mot de passe'}
+            {isLoading ? 'R√©initialisation...' : 'R√©initialiser le mot de passe'}
           </button>
         </form>
 
         <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <Link to="/login" className={styles.link}>
-            ? Retour ‡ la connexion
-          </Link>
+          <button onClick={() => navigate('/login')} className={styles.link}>
+            ‚Üê Retour √† la connexion
+          </button>
         </div>
       </div>
     </div>
