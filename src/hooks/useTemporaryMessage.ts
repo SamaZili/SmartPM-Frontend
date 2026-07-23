@@ -12,7 +12,8 @@ export function useTemporaryMessage() {
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => setMessage(''), 3000);
-    return () => clearTimeout(timer); // Cleanup pour éviter les fuites mémoire
+    // Cleanup pour éviter les fuites mémoire (memory leak)
+    return () => clearTimeout(timer); 
   }, [message]);
 
   const clearMessage = useCallback(() => {

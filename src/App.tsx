@@ -1,26 +1,37 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from './components/ToastContainer';
+import { useToast } from './hooks/useToast';
+
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage'; // ️ AJOUTER
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import TasksPage from './pages/TasksPage/TasksPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 
 function App() {
+  // Hook pour gérer les toasts globalement
+  const { toasts, removeToast } = useToast();
+
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* ️ AJOUTER */}
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/projects" element={<ProjectsPage />} />
-      <Route path="/tasks" element={<TasksPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <>
+      {/* Conteneur des notifications Toast (affiché par-dessus tout) */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
   );
 }
 
