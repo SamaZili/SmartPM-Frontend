@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
-import { useProjects } from '../../features/Projects/hooks/useProjects'; //  IMPORT DU HOOK PARTAGÉ 
-import { useTasks } from '../../features/Tasks/hooks/useTasks'; // Hook partagé
+import { useProjects } from '../../features/Projects/hooks/useProjects';
+import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
-import { useAuth } from '../../features/Auth/hooks/useAuth'; // Infos utilisateur dynamiques
+import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Project, Task, Estimation } from '../../types';
 import styles from './DashboardPage.module.css';
@@ -13,7 +14,6 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  // Utilisation du même hook que ProjectsPage pour garantir la synchronisation
   const { projects, addProject } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask } = useTasks(projects, selectedProject?.id || null);
@@ -80,7 +80,13 @@ const DashboardPage: React.FC = () => {
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
   const userName = user?.name || 'Utilisateur';
   const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
-  const maxStatusCount = Math.max(...Object.values(stats.statusDistribution), 1);
+
+  // 📊 Données pour le graphique Recharts
+  const chartData = [
+    { name: 'À faire', value: stats.statusDistribution.a_faire || 0, color: '#94a3b8' },
+    { name: 'En cours', value: stats.statusDistribution.en_cours || 0, color: '#f59e0b' },
+    { name: 'Terminée', value: stats.statusDistribution.terminee || 0, color: '#10b981' },
+  ];
 
   return (
     <div className={styles.pageContainer}>
@@ -113,39 +119,86 @@ const DashboardPage: React.FC = () => {
         {successMsg && <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>{successMsg}</div>}
 
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}><p className={styles.statLabel}>Projets actifs</p><p className={styles.statValue}>{stats.activeProjects}</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Tâches en cours</p><p className={styles.statValue}>{stats.tasksInProgress}</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Taux de complétion</p><p className={styles.statValue}>{stats.completionRate}%</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Estimation IA moyenne</p><p className={styles.statValuePrimary}>{stats.avgEstimation}h</p></div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Projets actifs</p>
+            <p className={styles.statValue}>{stats.activeProjects}</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Tâches en cours</p>
+            <p className={styles.statValue}>{stats.tasksInProgress}</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Taux de complétion</p>
+            <p className={styles.statValue}>{stats.completionRate}%</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Estimation IA moyenne</p>
+            <p className={styles.statValuePrimary}>{stats.avgEstimation}h</p>
+          </div>
         </div>
 
+        {/* 📊 GRAPHIQUE PROFESSIONNEL RECHARTS */}
         <div className={styles.chartSection}>
           <h3 className={styles.chartTitle}>📊 Distribution des tâches par statut</h3>
           <div className={styles.chartContainer}>
-            {[
-              { label: 'À faire', value: stats.statusDistribution.a_faire || 0, color: '#94a3b8' },
-              { label: 'En cours', value: stats.statusDistribution.en_cours || 0, color: '#f59e0b' },
-              { label: 'Terminée', value: stats.statusDistribution.terminee || 0, color: '#10b981' },
-            ].map(item => (
-              <div key={item.label} className={styles.chartBar}>
-                <div className={styles.chartBarFill} style={{ height: `${(item.value / maxStatusCount) * 200}px`, backgroundColor: item.color }}>{item.value}</div>
-                <span className={styles.chartBarLabel}>{item.label}</span>
-              </div>
-            ))}
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  animationBegin={0}
+                  animationDuration={1000}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    borderRadius: '8px', 
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                  }}
+                  itemStyle={{ color: '#1e293b', fontWeight: 600 }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
         <div className={styles.projectsSection}>
           <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
           <form onSubmit={handleAddProject} className={styles.projectForm}>
-            <input type="text" placeholder="Nom du nouveau projet..." value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder="Nom du nouveau projet..." 
+              value={newProjectName} 
+              onChange={(e) => setNewProjectName(e.target.value)} 
+            />
             <button type="submit">+ Nouveau projet</button>
           </form>
           <div className={styles.projectsGrid}>
             {projects.map((project: Project) => (
-              <div key={project.id} className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard} onClick={() => setSelectedProject(project)}>
+              <div 
+                key={project.id} 
+                className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard} 
+                onClick={() => setSelectedProject(project)}
+              >
                 <div className={styles.projectCardHeader}>
-                  <div className={styles.projectCardIcon}>{project.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
+                  <div className={styles.projectCardIcon}>
+                    {project.name?.charAt(0)?.toUpperCase() ?? '?'}
+                  </div>
                   <span className={styles.projectCardBadge}>ACTIF</span>
                 </div>
                 <h4 className={styles.projectCardTitle}>{project.name}</h4>
@@ -159,8 +212,18 @@ const DashboardPage: React.FC = () => {
           <div className={styles.tasksSection}>
             <h3 className={styles.tasksSectionTitle}>📋 Tâches pour : <span>{selectedProject.name}</span></h3>
             <form onSubmit={handleAddTask} className={styles.taskForm}>
-              <input type="text" placeholder="Nom de la tâche..." value={newTaskName} onChange={(e) => setNewTaskName(e.target.value)} required />
-              <textarea placeholder="Description (importante pour l'IA)..." value={newTaskDesc} onChange={(e) => setNewTaskDesc(e.target.value)} />
+              <input 
+                type="text" 
+                placeholder="Nom de la tâche..." 
+                value={newTaskName} 
+                onChange={(e) => setNewTaskName(e.target.value)} 
+                required 
+              />
+              <textarea 
+                placeholder="Description (importante pour l'IA)..." 
+                value={newTaskDesc} 
+                onChange={(e) => setNewTaskDesc(e.target.value)} 
+              />
               <button type="submit">+ Ajouter une tâche</button>
             </form>
             <div className={styles.taskList}>
@@ -170,7 +233,13 @@ const DashboardPage: React.FC = () => {
                     <h4 className={styles.taskItemTitle}>{task.name}</h4>
                     <p className={styles.taskItemDescription}>{task.description || 'Aucune description'}</p>
                   </div>
-                  <button onClick={() => handleEstimate(task.id)} disabled={isLoading} className={styles.estimateButton}>🤖 Estimer via IA</button>
+                  <button 
+                    onClick={() => handleEstimate(task.id)} 
+                    disabled={isLoading} 
+                    className={styles.estimateButton}
+                  >
+                    {isLoading ? '⏳ Estimation...' : '🤖 Estimer via IA'}
+                  </button>
                 </div>
               ))}
               {tasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet.</div>}
@@ -186,7 +255,9 @@ const DashboardPage: React.FC = () => {
                 <p><span>Effort prédit :</span> {estimationResult.predicted_effort} heures</p>
                 <p><span>Score de confiance :</span> {(estimationResult.confidence_score * 100).toFixed(0)}%</p>
               </div>
-              <div className={styles.aiResultDate}><p>Généré le {new Date(estimationResult.created_at).toLocaleString('fr-FR')}</p></div>
+              <div className={styles.aiResultDate}>
+                <p>Généré le {new Date(estimationResult.created_at).toLocaleString('fr-FR')}</p>
+              </div>
             </div>
           </div>
         )}
