@@ -2,11 +2,19 @@ import { useState, useCallback } from 'react';
 import { authApi, LoginDto, RegisterDto } from '../api/authApi';
 import { User } from '../../../types';
 
+// Interface pour stocker les erreurs de validation
+export interface ValidationError {
+  field: string;
+  messages: string[];
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
+  // Décoder le token JWT pour extraire les infos utilisateur
   const extractUserFromToken = useCallback((token: string): User | null => {
     try {
       const parts = token.split('.');
@@ -32,6 +40,7 @@ export function useAuth() {
   const login = useCallback(async (data: LoginDto) => {
     setIsLoading(true);
     setError('');
+    setValidationErrors([]);
     
     try {
       const response = await authApi.login(data);
@@ -50,8 +59,21 @@ export function useAuth() {
         return response.data;
       }
     } catch (err: any) {
+      // Gestion d'erreur générique
       const errorMessage = err.response?.data?.message || 'Erreur de connexion';
       setError(errorMessage);
+      
+      // Gestion des erreurs de validation détaillées
+      if (err.response?.data?.errors) {
+        const errors: ValidationError[] = Object.entries(err.response.data.errors).map(
+          ([field, messages]) => ({
+            field,
+            messages: messages as string[],
+          })
+        );
+        setValidationErrors(errors);
+      }
+      
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -61,6 +83,7 @@ export function useAuth() {
   const register = useCallback(async (data: RegisterDto) => {
     setIsLoading(true);
     setError('');
+    setValidationErrors([]);
     
     try {
       const response = await authApi.register(data);
@@ -79,8 +102,21 @@ export function useAuth() {
         return response.data;
       }
     } catch (err: any) {
+      // Gestion d'erreur générique
       const errorMessage = err.response?.data?.message || 'Erreur d\'inscription';
       setError(errorMessage);
+      
+      // Gestion des erreurs de validation détaillées
+      if (err.response?.data?.errors) {
+        const errors: ValidationError[] = Object.entries(err.response.data.errors).map(
+          ([field, messages]) => ({
+            field,
+            messages: messages as string[],
+          })
+        );
+        setValidationErrors(errors);
+      }
+      
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -91,7 +127,23 @@ export function useAuth() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    setError('');
+    setValidationErrors([]);
   }, []);
 
-  return { user, isLoading, error, login, register, logout };
+  const clearErrors = useCallback(() => {
+    setError('');
+    setValidationErrors([]);
+  }, []);
+
+  return { 
+    user, 
+    isLoading, 
+    error, 
+    validationErrors, 
+    login, 
+    register, 
+    logout,
+    clearErrors 
+  };
 }

@@ -1,178 +1,190 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useProjects } from '../../features/Projects/hooks/useProjects';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { Project } from '../../types';
-import styles from './ProjectsPage.module.css';
+import { RegisterDto } from '../../features/Auth/api/authApi';
+import styles from './RegisterPage.module.css';
 
-const ProjectsPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Récupération de l'utilisateur connecté
-  const { projects, addProject, updateProject, removeProject } = useProjects();
-  const [showModal, setShowModal] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', status: 'en_cours' });
-  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
+  const { 
+    register, 
+    isLoading, 
+    error, 
+    validationErrors, 
+    clearErrors 
+  } = useAuth();
+  
+  const [formData, setFormData] = useState<RegisterDto>({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    type: 'chef_de_projet',
+  });
 
-  const resetForm = () => {
-    setFormData({ name: '', description: '', status: 'en_cours' });
-    setEditingProject(null);
-    setShowModal(false);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Réinitialise les erreurs quand l'utilisateur modifie un champ
+    clearErrors();
+  };
+
+  const getErrorMessage = (field: string): string | null => {
+    const validationError = validationErrors.find(e => e.field === field);
+    if (validationError && validationError.messages.length > 0) {
+      return validationError.messages[0];
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingProject) {
-        await updateProject(editingProject.id, { ...formData, description: formData.description || undefined });
-        showMessage('Projet mis à jour avec succès !');
-      } else {
-        await addProject({ ...formData, description: formData.description || undefined });
-        showMessage('Projet créé avec succès !');
-      }
-      resetForm();
+      await register(formData);
+      navigate('/dashboard');
     } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de l\'opération', 5000, 'error');
+      // Les erreurs sont déjà gérées dans useAuth
     }
   };
-
-  const handleEdit = (project: Project) => {
-    setEditingProject(project);
-    setFormData({ name: project.name, description: project.description || '', status: project.status });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-      try {
-        await removeProject(id);
-        showMessage('Projet supprimé avec succès !');
-      } catch (err: any) {
-        showMessage(err.message || 'Erreur lors de la suppression', 5000, 'error');
-      }
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-  const userName = user?.name || 'Utilisateur';
-  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
 
   return (
     <div className={styles.pageContainer}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logoContainer}>
-          <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
-          <h1 className={styles.logoText}>SmartPM</h1>
-        </div>
-        
-        <nav className={styles.navMenu}>
-          <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>📁 Projets</button>
-          <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-          <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
-        </nav>
-
-        <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>{userInitial}</div>
-          <div className={styles.userDetails}>
-            <p className={styles.userName}>{userName}</p>
-            <p className={styles.userRole}>{userRole}</p>
-          </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
-        </div>
-      </aside>
-
-      <main className={styles.mainContent}>
-        <div className={styles.header}>
-          <h1 className={styles.pageTitle}>Gestion des Projets</h1>
-          <button onClick={() => setShowModal(true)} className={styles.primaryBtn}>+ Nouveau Projet</button>
+      <div className={styles.registerCard}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className={styles.logo}>️</div>
+          <h1 className={styles.title}>SmartPM</h1>
+          <p className={styles.subtitle}>Créez votre compte</p>
         </div>
 
-        {successMsg && (
-          <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>
-            {successMsg}
+        {/* Erreur générale */}
+        {error && (
+          <div className={styles.errorMessage}>
+            <strong>Erreur :</strong> {error}
           </div>
         )}
 
-        <div className={styles.projectsGrid}>
-          {projects.map((project: Project) => (
-            <div key={project.id} className={styles.projectCard}>
-              <div className={styles.projectCardHeader}>
-                <div className={styles.projectCardIcon}>
-                  {project.name?.charAt(0)?.toUpperCase() ?? '?'}
-                </div>
-                <span className={styles.projectCardBadge}>{project.status}</span>
-              </div>
-              <h3 className={styles.projectCardTitle}>{project.name}</h3>
-              <p className={styles.projectCardDescription}>{project.description || 'Aucune description'}</p>
-              <div className={styles.projectCardActions}>
-                <button onClick={() => handleEdit(project)} className={styles.editButton}>Modifier</button>
-                <button onClick={() => handleDelete(project.id)} className={styles.deleteButton}>Supprimer</button>
-              </div>
-            </div>
-          ))}
-          {projects.length === 0 && (
-            <div className={styles.emptyState}>Aucun projet pour le moment. Créez votre premier projet !</div>
-          )}
-        </div>
-
-        {showModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-              <h2>{editingProject ? 'Modifier le projet' : 'Nouveau projet'}</h2>
-              <form onSubmit={handleSubmit}>
-                <div className={styles.formGroup}>
-                  <label>Nom du projet</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                    autoFocus
-                  />
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label>Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={3}
-                  />
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label>Statut</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  >
-                    <option value="en_cours">En cours</option>
-                    <option value="termine">Terminé</option>
-                    <option value="en_pause">En pause</option>
-                  </select>
-                </div>
-                
-                <div className={styles.modalActions}>
-                  <button type="button" onClick={resetForm} className={styles.secondaryBtn}>Annuler</button>
-                  <button type="submit" className={styles.primaryBtn}>
-                    {editingProject ? 'Mettre à jour' : 'Créer'}
-                  </button>
-                </div>
-              </form>
-            </div>
+        {/* Erreurs de validation détaillées */}
+        {validationErrors.length > 0 && (
+          <div className={styles.validationErrors}>
+            <strong>Veuillez corriger les erreurs suivantes :</strong>
+            <ul>
+              {validationErrors.map((err, idx) => (
+                <li key={idx}>
+                  <strong>{err.field}:</strong> {err.messages.join(', ')}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-      </main>
+
+        <form onSubmit={handleSubmit}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="name">Nom complet</label>
+            <input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={getErrorMessage('name') ? styles.inputError : ''}
+            />
+            {getErrorMessage('name') && (
+              <span className={styles.fieldError}>{getErrorMessage('name')}</span>
+            )}
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="email">Adresse e-mail</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={getErrorMessage('email') ? styles.inputError : ''}
+            />
+            {getErrorMessage('email') && (
+              <span className={styles.fieldError}>{getErrorMessage('email')}</span>
+            )}
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="type">Rôle</label>
+            <select
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+            >
+              <option value="chef_de_projet">Chef de projet</option>
+              <option value="developer">Développeur</option>
+            </select>
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="password">Mot de passe</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              minLength={8}
+              className={getErrorMessage('password') ? styles.inputError : ''}
+            />
+            {getErrorMessage('password') && (
+              <span className={styles.fieldError}>{getErrorMessage('password')}</span>
+            )}
+            <small className={styles.hint}>Minimum 8 caractères</small>
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="password_confirmation">Confirmation du mot de passe</label>
+            <input
+              id="password_confirmation"
+              name="password_confirmation"
+              type="password"
+              value={formData.password_confirmation}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={getErrorMessage('password_confirmation') ? styles.inputError : ''}
+            />
+            {getErrorMessage('password_confirmation') && (
+              <span className={styles.fieldError}>{getErrorMessage('password_confirmation')}</span>
+            )}
+          </div>
+
+          <button 
+            type="submit" 
+            className={styles.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Inscription en cours...' : "S'inscrire"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+            Déjà un compte ?{' '}
+            <Link to="/login" style={{ color: '#10b981', textDecoration: 'none', fontWeight: '600' }}>
+              Se connecter
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default ProjectsPage;
+export default RegisterPage;
