@@ -1,38 +1,35 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ToastContainer } from './components/ToastContainer';
-import { useToast } from './hooks/useToast';
+import React from 'react';
+import { Toast } from '../Toast';
+import styles from './ToastContainer.module.css';
 
-import LoginPage from './pages/LoginPage/LoginPage';
-import RegisterPage from './pages/RegisterPage/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage/DashboardPage';
-import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
-import TasksPage from './pages/TasksPage/TasksPage';
-import ProfilePage from './pages/ProfilePage/ProfilePage';
-
-function App() {
-  // Hook pour gérer les toasts globalement
-  const { toasts, removeToast } = useToast();
-
-  return (
-    <>
-      {/* Conteneur des notifications Toast (affiché par-dessus tout) */}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-      
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </>
-  );
+export interface ToastItem {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+  duration?: number;
 }
 
-export default App;
+interface ToastContainerProps {
+  toasts: ToastItem[];
+  onRemove: (id: string) => void;
+}
+
+const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className={styles.container}>
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => onRemove(toast.id)}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default ToastContainer;

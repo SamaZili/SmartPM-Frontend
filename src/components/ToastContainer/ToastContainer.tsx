@@ -1,9 +1,12 @@
 import React from 'react';
-import { Toast, ToastProps } from '../Toast';
+import Toast from '../Toast/Toast';
 import styles from './ToastContainer.module.css';
 
-interface ToastItem extends ToastProps {
+export interface ToastItem {
   id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+  duration?: number;
 }
 
 interface ToastContainerProps {
