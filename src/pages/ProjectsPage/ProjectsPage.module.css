@@ -148,9 +148,30 @@
 
 .pageTitle {
   color: #1e293b;
+  margin: 0;
   font-size: 1.875rem;
   font-weight: 700;
-  margin: 0;
+}
+
+/* ===== MESSAGES ===== */
+.successMessage {
+  color: #166534;
+  background-color: #f0fdf4;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #bbf7d0;
+  font-size: 0.875rem;
+}
+
+.errorMessage {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #fecaca;
+  font-size: 0.875rem;
 }
 
 /* ===== BARRE DE RECHERCHE ET FILTRES ===== */
@@ -175,7 +196,6 @@
   transform: translateY(-50%);
   font-size: 1rem;
   pointer-events: none;
-  color: #94a3b8;
 }
 
 .searchInput {
@@ -280,7 +300,6 @@
   border: 1px solid #e2e8f0;
   padding: 1.5rem;
   border-radius: 12px;
-  cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -345,8 +364,8 @@
 .editButton {
   flex: 1;
   padding: 0.625rem 1rem;
-  background-color: #eff6ff;
-  color: #2563eb;
+  background-color: #3b82f6;
+  color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -356,16 +375,16 @@
 }
 
 .editButton:hover {
-  background-color: #dbeafe;
+  background-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .deleteButton {
   flex: 1;
   padding: 0.625rem 1rem;
-  background-color: #fef2f2;
-  color: #dc2626;
+  background-color: #ef4444;
+  color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -375,12 +394,60 @@
 }
 
 .deleteButton:hover {
-  background-color: #fee2e2;
+  background-color: #dc2626;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-/* ===== MODALE (déjà fournie, conservée) ===== */
+/* ===== ÉTAT VIDE ===== */
+.emptyState {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: #94a3b8;
+}
+
+.emptyState h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.875rem;
+}
+
+.resetFiltersBtn {
+  padding: 0.75rem 1.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.resetFiltersBtn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* ===== MODALE ===== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -501,73 +568,4 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
-}
-
-/* ===== ÉTAT VIDE ===== */
-.emptyState {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 3rem 2rem;
-  background-color: white;
-  border-radius: 12px;
-  border: 2px dashed #e2e8f0;
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.emptyStateIcon {
-  font-size: 4rem;
-  color: #e2e8f0;
-  margin-bottom: 1rem;
-}
-
-.emptyState h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.emptyState p {
-  margin: 0 0 1.5rem 0;
-  line-height: 1.5;
-}
-
-.resetFiltersBtn {
-  padding: 0.75rem 1.5rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.resetFiltersBtn:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-}
-
-/* ===== MESSAGES ===== */
-.successMessage {
-  color: #166534;
-  background-color: #f0fdf4;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #bbf7d0;
-  font-size: 0.875rem;
-}
-
-.errorMessage {
-  color: #dc2626;
-  background-color: #fef2f2;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #fecaca;
-  font-size: 0.875rem;
 }
