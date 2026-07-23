@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
-import { useProjects } from '../../features/Dashboard/hooks/useProjects';
-import { useTasks } from '../../features/Dashboard/hooks/useTasks';
+import { useProjects } from '../../features/Projects/hooks/useProjects'; //  IMPORT DU HOOK PARTAGÉ 
+import { useTasks } from '../../features/Tasks/hooks/useTasks'; // Hook partagé
 import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
+import { useAuth } from '../../features/Auth/hooks/useAuth'; // Infos utilisateur dynamiques
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Project, Task, Estimation } from '../../types';
 import styles from './DashboardPage.module.css';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Utilisation du même hook que ProjectsPage pour garantir la synchronisation
   const { projects, addProject } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask } = useTasks(projects, selectedProject?.id || null);
+  
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [estimationResult, setEstimationResult] = useState<Estimation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +71,15 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  const userName = user?.name || 'Utilisateur';
+  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
   const maxStatusCount = Math.max(...Object.values(stats.statusDistribution), 1);
 
   return (
@@ -77,19 +91,19 @@ const DashboardPage: React.FC = () => {
         </div>
         
         <nav className={styles.navMenu}>
-          <button className={styles.navButtonActive}>📊 Tableau de bord</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>📊 Tableau de bord</button>
           <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
           <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
           <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>AT</div>
+          <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
-            <p className={styles.userName}>Admin Test</p>
-            <p className={styles.userRole}>Chef de projet</p>
+            <p className={styles.userName}>{userName}</p>
+            <p className={styles.userRole}>{userRole}</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>Déconnexion</button>
+          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </aside>
 
@@ -109,9 +123,9 @@ const DashboardPage: React.FC = () => {
           <h3 className={styles.chartTitle}>📊 Distribution des tâches par statut</h3>
           <div className={styles.chartContainer}>
             {[
-              { label: 'À faire', value: stats.statusDistribution.a_faire, color: '#94a3b8' },
-              { label: 'En cours', value: stats.statusDistribution.en_cours, color: '#f59e0b' },
-              { label: 'Terminée', value: stats.statusDistribution.terminee, color: '#10b981' },
+              { label: 'À faire', value: stats.statusDistribution.a_faire || 0, color: '#94a3b8' },
+              { label: 'En cours', value: stats.statusDistribution.en_cours || 0, color: '#f59e0b' },
+              { label: 'Terminée', value: stats.statusDistribution.terminee || 0, color: '#10b981' },
             ].map(item => (
               <div key={item.label} className={styles.chartBar}>
                 <div className={styles.chartBarFill} style={{ height: `${(item.value / maxStatusCount) * 200}px`, backgroundColor: item.color }}>{item.value}</div>
@@ -131,7 +145,7 @@ const DashboardPage: React.FC = () => {
             {projects.map((project: Project) => (
               <div key={project.id} className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard} onClick={() => setSelectedProject(project)}>
                 <div className={styles.projectCardHeader}>
-                  <div className={styles.projectCardIcon}>{project.name.charAt(0).toUpperCase()}</div>
+                  <div className={styles.projectCardIcon}>{project.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
                   <span className={styles.projectCardBadge}>ACTIF</span>
                 </div>
                 <h4 className={styles.projectCardTitle}>{project.name}</h4>

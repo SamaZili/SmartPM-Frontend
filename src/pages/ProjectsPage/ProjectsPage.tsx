@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProjects } from '../../features/Projects/hooks/useProjects';
+import { useProjects } from '../../features/Projects/hooks/useProjects'; // Hook partagé
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Project } from '../../types';
@@ -8,7 +8,7 @@ import styles from './ProjectsPage.module.css';
 
 const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuth(); // Infos utilisateur dynamiques
   const { projects, addProject, updateProject, removeProject } = useProjects();
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -130,41 +130,23 @@ const ProjectsPage: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
                   <label>Nom du projet</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                    autoFocus
-                  />
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required autoFocus />
                 </div>
-                
                 <div className={styles.formGroup}>
                   <label>Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={3}
-                  />
+                  <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows={3} />
                 </div>
-                
                 <div className={styles.formGroup}>
                   <label>Statut</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  >
+                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
                     <option value="en_cours">En cours</option>
                     <option value="termine">Terminé</option>
                     <option value="en_pause">En pause</option>
                   </select>
                 </div>
-                
                 <div className={styles.modalActions}>
                   <button type="button" onClick={resetForm} className={styles.secondaryBtn}>Annuler</button>
-                  <button type="submit" className={styles.primaryBtn}>
-                    {editingProject ? 'Mettre à jour' : 'Créer'}
-                  </button>
+                  <button type="submit" className={styles.primaryBtn}>{editingProject ? 'Mettre à jour' : 'Créer'}</button>
                 </div>
               </form>
             </div>

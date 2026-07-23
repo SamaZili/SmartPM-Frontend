@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from './components/ToastContainer';
 import { useToast } from './hooks/useToast';
+import { ProjectProvider } from './context/ProjectContext';
 
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
@@ -15,7 +16,7 @@ function App() {
   const { toasts, removeToast } = useToast();
 
   return (
-    <>
+    <ProjectProvider>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       
       <Routes>
@@ -29,7 +30,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
-    </>
+    </ProjectProvider>
   );
 }
 
