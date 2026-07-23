@@ -11,14 +11,16 @@ const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks, addTask, updateTaskStatus } = useTasks(projects, selectedProject?.id || null);
+  
+  // ✅ 1. DÉSTRUCTURER removeTask ICI
+  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(projects, selectedProject?.id || null);
   
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [loadingEstimates, setLoadingEstimates] = useState<Set<number>>(new Set());
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
   const { message, showMessage } = useTemporaryMessage();
 
-  // ✅ 1. CHARGER les estimations au démarrage depuis le localStorage
+  // ✅ 2. CHARGER les estimations au démarrage depuis le localStorage
   useEffect(() => {
     const saved = localStorage.getItem('smartpm_estimations');
     if (saved) {
@@ -34,7 +36,7 @@ const TasksPage: React.FC = () => {
     }
   }, []);
 
-  // ✅ 2. SAUVEGARDER automatiquement à chaque modification du state
+  // ✅ 3. SAUVEGARDER automatiquement à chaque modification du state
   useEffect(() => {
     localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
     console.log('💾 TasksPage: Estimations sauvegardées:', estimations.length);
@@ -61,7 +63,21 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  // ✅ 3. FONCTION D'ESTIMATION ROBUSTE
+  // ✅ 4. FONCTION DE SUPPRESSION DE TÂCHE
+  const handleDeleteTask = async (taskId: number) => {
+    if (!selectedProject) return;
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.')) {
+      try {
+        await removeTask(selectedProject.id, taskId);
+        showMessage('Tâche supprimée avec succès !');
+      } catch (err: any) {
+        showMessage(err.message || 'Erreur lors de la suppression.', 3000, 'error');
+      }
+    }
+  };
+
+  // ✅ 5. FONCTION D'ESTIMATION ROBUSTE
   const handleEstimate = async (taskId: number) => {
     if (!selectedProject) return;
     
@@ -254,6 +270,29 @@ const TasksPage: React.FC = () => {
                         style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                       >
                         {isLoading ? '⏳ Estimation...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
+                      </button>
+
+                      {/* ✅ 6. BOUTON SUPPRIMER AJOUTÉ ICI */}
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          marginLeft: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
+                      >
+                        🗑️ Supprimer
                       </button>
                     </div>
 
