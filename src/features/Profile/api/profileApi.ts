@@ -1,13 +1,5 @@
 import { get, put } from '../../../services/api';
-import { User } from '../../../types';
-
-export interface UpdateProfileDto {
-  name?: string;
-  email?: string;
-  current_password?: string;
-  new_password?: string;
-  new_password_confirmation?: string;
-}
+import { User, UpdateProfileDto } from '../../../types';
 
 export const profileApi = {
   getProfile: () => get<User>('/profile'),
