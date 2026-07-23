@@ -11,17 +11,25 @@ export function useProjects() {
     setIsLoading(true);
     setError('');
     
+    // 1. Vérifier d'abord si on a des données locales (qui contiennent nos suppressions/ajouts)
+    const storedProjects = localStorage.getItem('projects');
+    
     try {
       const response = await projectsApi.getAll();
       if (response.success && response.data) {
-        setProjects(response.data);
+        // Si on a déjà des données locales, on les garde pour la démo (priorité au localStorage)
+        // Sinon, on initialise avec les données de l'API
+        if (storedProjects) {
+          setProjects(JSON.parse(storedProjects));
+        } else {
+          setProjects(response.data);
+          localStorage.setItem('projects', JSON.stringify(response.data));
+        }
       }
     } catch (err: any) {
-      // Fallback : données locales si API échoue
-      console.warn('API projects indisponible');
-      const stored = localStorage.getItem('projects');
-      if (stored) {
-        setProjects(JSON.parse(stored));
+      console.warn('API projects indisponible, utilisation du localStorage');
+      if (storedProjects) {
+        setProjects(JSON.parse(storedProjects));
       }
     } finally {
       setIsLoading(false);
@@ -33,12 +41,15 @@ export function useProjects() {
       const response = await projectsApi.create(data);
       if (response.success && response.data) {
         const newProject = response.data;
-        setProjects(prev => [...prev, newProject]);
-        localStorage.setItem('projects', JSON.stringify([...projects, newProject]));
+        setProjects(prev => {
+          const updated = [...prev, newProject];
+          localStorage.setItem('projects', JSON.stringify(updated));
+          return updated;
+        });
         return newProject;
       }
     } catch (err: any) {
-      // Création locale si API échoue
+      console.warn('API create indisponible, création locale uniquement');
       const newProject: Project = {
         id: Date.now(),
         name: data.name,
@@ -49,56 +60,49 @@ export function useProjects() {
         updated_at: new Date().toISOString(),
       };
       
-      const updated = [...projects, newProject];
-      setProjects(updated);
-      localStorage.setItem('projects', JSON.stringify(updated));
+      setProjects(prev => {
+        const updated = [...prev, newProject];
+        localStorage.setItem('projects', JSON.stringify(updated));
+        return updated;
+      });
       
       return newProject;
     }
-  }, [projects]);
+  }, []);
 
   const updateProject = useCallback(async (id: number, data: Partial<CreateProjectDto>) => {
-    try {
-      // Ne pas appeler l'API si elle n'existe pas
-      // const response = await projectsApi.update(id, data);
-      
-      // Mise à jour locale
-      const updated = projects.map(p => 
+    // Mise à jour locale prioritaire
+    setProjects(prev => {
+      const updated = prev.map(p => 
         p.id === id ? { ...p, ...data, updated_at: new Date().toISOString() } : p
       );
-      
-      setProjects(updated);
       localStorage.setItem('projects', JSON.stringify(updated));
-      
-      return updated.find(p => p.id === id);
-    } catch (err: any) {
-      // Fallback local
-      const updated = projects.map(p => 
-        p.id === id ? { ...p, ...data } : p
-      );
-      
-      setProjects(updated);
-      localStorage.setItem('projects', JSON.stringify(updated));
-      
-      return updated.find(p => p.id === id);
+      return updated;
+    });
+    
+    // On tente l'API en arrière-plan sans bloquer l'interface
+    try {
+      await projectsApi.update(id, data);
+    } catch (err) {
+      console.warn('API update indisponible, mise à jour locale conservée.');
     }
-  }, [projects]);
+  }, []);
 
   const removeProject = useCallback(async (id: number) => {
+    // Suppression locale immédiate et prioritaire
+    setProjects(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      localStorage.setItem('projects', JSON.stringify(updated));
+      return updated;
+    });
+    
+    // On tente l'API en arrière-plan sans bloquer l'interface
     try {
-      // const response = await projectsApi.delete(id);
-      
-      // Suppression locale
-      const updated = projects.filter(p => p.id !== id);
-      setProjects(updated);
-      localStorage.setItem('projects', JSON.stringify(updated));
-    } catch (err: any) {
-      // Fallback local
-      const updated = projects.filter(p => p.id !== id);
-      setProjects(updated);
-      localStorage.setItem('projects', JSON.stringify(updated));
+      await projectsApi.delete(id);
+    } catch (err) {
+      console.warn('API delete indisponible, suppression locale conservée.');
     }
-  }, [projects]);
+  }, []);
 
   useEffect(() => {
     fetchProjects();
