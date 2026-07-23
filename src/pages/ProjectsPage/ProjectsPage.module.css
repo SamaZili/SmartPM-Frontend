@@ -21,6 +21,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 2.5rem;
 }
 
 .logoIcon {
@@ -141,32 +142,130 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .pageTitle {
   color: #1e293b;
-  margin: 0;
   font-size: 1.875rem;
   font-weight: 700;
+  margin: 0;
 }
 
-/* ===== MESSAGES ===== */
-.successMessage {
-  color: #166534;
-  background-color: #f0fdf4;
-  padding: 1rem;
-  border-radius: 8px;
+/* ===== BARRE DE RECHERCHE ET FILTRES ===== */
+.searchFilterBar {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   margin-bottom: 1.5rem;
-  border: 1px solid #bbf7d0;
 }
 
-.errorMessage {
-  color: #dc2626;
-  background-color: #fef2f2;
-  padding: 1rem;
+.searchContainer {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+  color: #94a3b8;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.875rem 3rem 0.875rem 3rem;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.clearSearch {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f1f5f9;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.clearSearch:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 0.625rem 1rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filterBtn:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.filterBtnActive {
+  background-color: #10b981;
+  color: white;
+  border-color: #059669;
+}
+
+.filterBtnActive:hover {
+  background-color: #059669;
+  color: white;
+}
+
+/* ===== COMPTEUR DE RÉSULTATS ===== */
+.resultsInfo {
+  padding: 0.75rem 1rem;
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
   margin-bottom: 1.5rem;
-  border: 1px solid #fecaca;
+  color: #1e40af;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.resultsInfo span {
+  font-weight: 600;
 }
 
 /* ===== GRILLE DES PROJETS ===== */
@@ -181,6 +280,7 @@
   border: 1px solid #e2e8f0;
   padding: 1.5rem;
   border-radius: 12px;
+  cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -245,8 +345,8 @@
 .editButton {
   flex: 1;
   padding: 0.625rem 1rem;
-  background-color: #3b82f6;
-  color: white;
+  background-color: #eff6ff;
+  color: #2563eb;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -256,16 +356,16 @@
 }
 
 .editButton:hover {
-  background-color: #2563eb;
+  background-color: #dbeafe;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
 }
 
 .deleteButton {
   flex: 1;
   padding: 0.625rem 1rem;
-  background-color: #ef4444;
-  color: white;
+  background-color: #fef2f2;
+  color: #dc2626;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -275,12 +375,12 @@
 }
 
 .deleteButton:hover {
-  background-color: #dc2626;
+  background-color: #fee2e2;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
 }
 
-/* ===== MODALE ===== */
+/* ===== MODALE (déjà fournie, conservée) ===== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -408,9 +508,66 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 3rem 2rem;
-  color: #64748b;
-  background-color: #f8fafc;
+  background-color: white;
   border-radius: 12px;
   border: 2px dashed #e2e8f0;
-  font-size: 1rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  color: #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.resetFiltersBtn {
+  padding: 0.75rem 1.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.resetFiltersBtn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* ===== MESSAGES ===== */
+.successMessage {
+  color: #166534;
+  background-color: #f0fdf4;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #bbf7d0;
+  font-size: 0.875rem;
+}
+
+.errorMessage {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #fecaca;
+  font-size: 0.875rem;
 }
