@@ -550,3 +550,184 @@
   min-height: 300px;
   padding: 1rem 0;
 }
+/* ===== NOUVEAU : CARTE INSIGHT IA ===== */
+.aiInsightCard {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.05);
+}
+
+.aiInsightHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.aiIcon {
+  font-size: 1.5rem;
+}
+
+.aiInsightHeader h3 {
+  margin: 0;
+  color: #166534;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.aiInsightMetrics {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.aiMetric {
+  display: flex;
+  flex-direction: column;
+}
+
+.aiMetricValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.aiMetricLabel {
+  font-size: 0.875rem;
+  color: #166534;
+  font-weight: 500;
+}
+
+/* ===== NOUVEAU : LAYOUT SPLIT (Graphique + Projets récents) ===== */
+.dashboardSplit {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboardSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== NOUVEAU : PROJETS RÉCENTS ===== */
+.recentProjectsSection {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.recentProjectsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.viewAllBtn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.viewAllBtn:hover {
+  background-color: #eff6ff;
+}
+
+.recentProjectsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.recentProjectItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.recentProjectItem:hover {
+  background-color: #f0fdf4;
+  border-color: #86efac;
+  transform: translateX(4px);
+}
+
+.recentProjectIcon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.recentProjectInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.recentProjectInfo h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recentProjectStatus {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.emptyRecent {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #64748b;
+}
+
+.createProjectBtn {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.createProjectBtn:hover {
+  background-color: #2563eb;
+}

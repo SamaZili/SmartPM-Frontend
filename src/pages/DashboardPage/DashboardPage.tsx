@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
@@ -14,7 +14,7 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const { projects, addProject } = useProjects();
+  const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask } = useTasks(projects, selectedProject?.id || null);
   
@@ -23,23 +23,24 @@ const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
   
-  const [newProjectName, setNewProjectName] = useState('');
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
 
   const stats = useDashboardStats(projects, tasks, estimations);
 
-  const handleAddProject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newProjectName) return;
-    try {
-      await addProject({ name: newProjectName, description: 'Nouveau projet', status: 'en_cours' });
-      setNewProjectName('');
-      showMessage('Projet créé avec succès !');
-    } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la création.', 5000, 'error');
-    }
-  };
+  // 🧠 CALCUL DES INSIGHTS IA (Idée 3)
+  const aiInsights = useMemo(() => {
+    const totalEstimations = estimations.length;
+    const avgConfidence = totalEstimations > 0 
+      ? (estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100).toFixed(0)
+      : 0;
+    
+    const tasksWithoutEstimation = tasks.filter(t => 
+      !estimations.some(e => e.task_id === t.id)
+    ).length;
+
+    return { totalEstimations, avgConfidence, tasksWithoutEstimation };
+  }, [estimations, tasks]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +89,9 @@ const DashboardPage: React.FC = () => {
     { name: 'Terminée', value: stats.statusDistribution.terminee || 0, color: '#10b981' },
   ];
 
+  // 📁 Projets récents (Idée 1 : on n'affiche que les 3 derniers)
+  const recentProjects = projects.slice(0, 3);
+
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
@@ -118,6 +122,7 @@ const DashboardPage: React.FC = () => {
 
         {successMsg && <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>{successMsg}</div>}
 
+        {/* 1. CARTES DE STATISTIQUES */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Projets actifs</p>
@@ -137,93 +142,102 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 📊 GRAPHIQUE PROFESSIONNEL RECHARTS */}
-        <div className={styles.chartSection}>
-          <h3 className={styles.chartTitle}>📊 Distribution des tâches par statut</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                  animationBegin={0}
-                  animationDuration={1000}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    borderRadius: '8px', 
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                  }}
-                  itemStyle={{ color: '#1e293b', fontWeight: 600 }}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  iconType="circle"
-                />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* 2. NOUVEAU : CARTE INSIGHT IA (Idée 3) */}
+        <div className={styles.aiInsightCard}>
+          <div className={styles.aiInsightHeader}>
+            <span className={styles.aiIcon}>🤖</span>
+            <h3>Insights de l'Intelligence Artificielle</h3>
+          </div>
+          <div className={styles.aiInsightMetrics}>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.totalEstimations}</span>
+              <span className={styles.aiMetricLabel}>Estimations réalisées</span>
+            </div>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.avgConfidence}%</span>
+              <span className={styles.aiMetricLabel}>Confiance moyenne de l'IA</span>
+            </div>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.tasksWithoutEstimation}</span>
+              <span className={styles.aiMetricLabel}>Tâches en attente d'estimation</span>
+            </div>
           </div>
         </div>
 
-        <div className={styles.projectsSection}>
-          <h3 className={styles.projectsSectionTitle}>📁 Mes Projets</h3>
-          <form onSubmit={handleAddProject} className={styles.projectForm}>
-            <input 
-              type="text" 
-              placeholder="Nom du nouveau projet..." 
-              value={newProjectName} 
-              onChange={(e) => setNewProjectName(e.target.value)} 
-            />
-            <button type="submit">+ Nouveau projet</button>
-          </form>
-          <div className={styles.projectsGrid}>
-            {projects.map((project: Project) => (
-              <div 
-                key={project.id} 
-                className={selectedProject?.id === project.id ? styles.projectCardSelected : styles.projectCard} 
-                onClick={() => setSelectedProject(project)}
-              >
-                <div className={styles.projectCardHeader}>
-                  <div className={styles.projectCardIcon}>
-                    {project.name?.charAt(0)?.toUpperCase() ?? '?'}
+        <div className={styles.dashboardSplit}>
+          {/* 3. GRAPHIQUE PROFESSIONNEL */}
+          <div className={styles.chartSection}>
+            <h3 className={styles.chartTitle}>📊 Distribution des tâches</h3>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={90}
+                    paddingAngle={4}
+                    dataKey="value"
+                    animationBegin={200}
+                    animationDuration={1000}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}
+                    itemStyle={{ color: '#1e293b', fontWeight: 600 }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 4. NOUVEAU : PROJETS RÉCENTS (Idée 1) */}
+          <div className={styles.recentProjectsSection}>
+            <div className={styles.recentProjectsHeader}>
+              <h3 className={styles.chartTitle}>📁 Projets Récents</h3>
+              <button onClick={() => navigate('/projects')} className={styles.viewAllBtn}>
+                Voir tous →
+              </button>
+            </div>
+            <div className={styles.recentProjectsList}>
+              {recentProjects.length > 0 ? (
+                recentProjects.map((project: Project) => (
+                  <div 
+                    key={project.id} 
+                    className={styles.recentProjectItem}
+                    onClick={() => { setSelectedProject(project); window.scrollTo({ top: 500, behavior: 'smooth' }); }}
+                  >
+                    <div className={styles.recentProjectIcon}>{project.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
+                    <div className={styles.recentProjectInfo}>
+                      <h4>{project.name}</h4>
+                      <span className={styles.recentProjectStatus}>{project.status}</span>
+                    </div>
                   </div>
-                  <span className={styles.projectCardBadge}>ACTIF</span>
+                ))
+              ) : (
+                <div className={styles.emptyRecent}>
+                  <p>Aucun projet pour le moment.</p>
+                  <button onClick={() => navigate('/projects')} className={styles.createProjectBtn}>
+                    + Créer mon premier projet
+                  </button>
                 </div>
-                <h4 className={styles.projectCardTitle}>{project.name}</h4>
-                <p className={styles.projectCardId}>ID: {project.id}</p>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
         </div>
 
+        {/* 5. SECTION TÂCHES DU PROJET SÉLECTIONNÉ */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3 className={styles.tasksSectionTitle}>📋 Tâches pour : <span>{selectedProject.name}</span></h3>
             <form onSubmit={handleAddTask} className={styles.taskForm}>
-              <input 
-                type="text" 
-                placeholder="Nom de la tâche..." 
-                value={newTaskName} 
-                onChange={(e) => setNewTaskName(e.target.value)} 
-                required 
-              />
-              <textarea 
-                placeholder="Description (importante pour l'IA)..." 
-                value={newTaskDesc} 
-                onChange={(e) => setNewTaskDesc(e.target.value)} 
-              />
+              <input type="text" placeholder="Nom de la tâche..." value={newTaskName} onChange={(e) => setNewTaskName(e.target.value)} required />
+              <textarea placeholder="Description (importante pour l'IA)..." value={newTaskDesc} onChange={(e) => setNewTaskDesc(e.target.value)} />
               <button type="submit">+ Ajouter une tâche</button>
             </form>
             <div className={styles.taskList}>
@@ -233,16 +247,12 @@ const DashboardPage: React.FC = () => {
                     <h4 className={styles.taskItemTitle}>{task.name}</h4>
                     <p className={styles.taskItemDescription}>{task.description || 'Aucune description'}</p>
                   </div>
-                  <button 
-                    onClick={() => handleEstimate(task.id)} 
-                    disabled={isLoading} 
-                    className={styles.estimateButton}
-                  >
-                    {isLoading ? '⏳ Estimation...' : '🤖 Estimer via IA'}
+                  <button onClick={() => handleEstimate(task.id)} disabled={isLoading} className={styles.estimateButton}>
+                    {isLoading ? '⏳...' : '🤖 Estimer via IA'}
                   </button>
                 </div>
               ))}
-              {tasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet.</div>}
+              {tasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet. Ajoutez-en une ci-dessus !</div>}
             </div>
           </div>
         )}
