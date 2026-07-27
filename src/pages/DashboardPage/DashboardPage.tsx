@@ -14,7 +14,7 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks } = useTasks(projects, selectedProject?.id || null);
+  const { tasks } = useTasks(selectedProject?.id || null);
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const { message: successMsg, type: msgType } = useTemporaryMessage();
 

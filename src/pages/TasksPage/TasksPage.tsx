@@ -11,7 +11,7 @@ const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(projects, selectedProject?.id || null);
+  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [loadingEstimates, setLoadingEstimates] = useState<Set<number>>(new Set());
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
