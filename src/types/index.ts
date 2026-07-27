@@ -5,7 +5,7 @@ export interface User {
   name: string;
   email: string;
   type: 'chef_de_projet' | 'developer' | 'admin';
-  email_verified_at?: string;
+  email_verified_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,10 +27,6 @@ export interface Task {
   description?: string;
   status: 'a_faire' | 'en_cours' | 'terminee';
   complexity?: string;
-  transactions?: number;
-  entities?: number;
-  team_exp?: number;
-  manager_exp?: number;
   created_at: string;
   updated_at: string;
 }
@@ -41,55 +37,7 @@ export interface Estimation {
   predicted_effort: number;
   confidence_score: number;
   created_at: string;
-  updated_at: string;
-}
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  name: string;
-  email: string;
-  password: string;
-  password_confirmation: string;
-  type: string;
-}
-
-export interface ForgotPasswordDto {
-  email: string;
-}
-
-export interface ResetPasswordDto {
-  token: string;
-  password: string;
-  password_confirmation: string;
-}
-
-export interface UpdateProfileDto {
-  name?: string;
-  email?: string;
-  current_password?: string;
-  new_password?: string;
-  new_password_confirmation?: string;
-}
-
-export interface CreateProjectDto {
-  name: string;
-  description?: string;
-  status?: string;
-}
-
-export interface CreateTaskDto {
-  name: string;
-  description?: string;
-  status?: string;
-  complexity?: string;
-}
-
-export interface UpdateTaskStatusDto {
-  status: string;
+  updated_at: string; // ← Important pour éviter l'erreur TS2741
 }
 
 export interface DashboardStats {
@@ -104,10 +52,18 @@ export interface DashboardStats {
   };
 }
 
+// --- DTOs (Data Transfer Objects) pour les API ---
+export interface LoginDto { email: string; password: string; }
+export interface RegisterDto { name: string; email: string; password: string; password_confirmation: string; type: string; }
+export interface ForgotPasswordDto { email: string; }
+export interface ResetPasswordDto { token: string; password: string; password_confirmation: string; }
+export interface UpdateProfileDto { name?: string; email?: string; current_password?: string; new_password?: string; new_password_confirmation?: string; }
+export interface CreateProjectDto { name: string; description?: string; status?: string; }
+export interface CreateTaskDto { name: string; description?: string; status?: string; complexity?: string; }
+export interface UpdateTaskStatusDto { status: string; }
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
-  error_code?: string;
-  message_code?: string;
 }

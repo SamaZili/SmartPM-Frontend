@@ -8,7 +8,7 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
   const [isLoading, setIsLoading] = useState(false);
   const { showMessage } = useTemporaryMessage();
 
-  // Charger depuis localStorage
+  // 1. Charger depuis localStorage au démarrage
   useEffect(() => {
     const stored = localStorage.getItem('smartpm_estimations');
     if (stored) {
@@ -21,12 +21,12 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
     }
   }, []);
 
-  // Sauvegarder dans localStorage
+  // 2. Sauvegarder dans localStorage à chaque modification
   useEffect(() => {
     localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
   }, [estimations]);
 
-  // Logique d'estimation déplacée ici
+  // 3. Logique d'estimation (API + Fallback local)
   const handleEstimate = useCallback(async (taskId: number) => {
     if (!selectedProjectId) return;
     setIsLoading(true);
@@ -45,18 +45,24 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
           return [...prev, estimationData];
         });
         showMessage('Estimation générée !');
-      } else {
-        throw new Error('Réponse API sans données valides');
       }
     } catch (err) {
+      // Fallback local si l'API échoue
       const now = new Date().toISOString();
       const fakeEstimation: Estimation = {
-        id: Date.now(), task_id: taskId, predicted_effort: Math.floor(Math.random() * 8) + 2,
-        confidence_score: 0.75 + Math.random() * 0.20, created_at: now, updated_at: now,
+        id: Date.now(),
+        task_id: taskId,
+        predicted_effort: Math.floor(Math.random() * 8) + 2,
+        confidence_score: 0.75 + Math.random() * 0.20,
+        created_at: now,
+        updated_at: now,
       };
       setEstimations(prev => {
         const exists = prev.some(e => e.task_id === taskId);
-        if (exists) { showMessage('Déjà estimée !', 3000, 'error'); return prev; }
+        if (exists) {
+          showMessage('Déjà estimée !', 3000, 'error');
+          return prev;
+        }
         return [...prev, fakeEstimation];
       });
       showMessage('Estimation (mode local) !');
@@ -65,12 +71,15 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
     }
   }, [selectedProjectId, showMessage]);
 
-  // Calcul des insights déplacé ici
+  // 4. Calcul des Insights IA
   const aiInsights = useMemo(() => {
     const totalEstimations = estimations.length;
     const avgConfidence = totalEstimations > 0
-      ? Math.round(estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100) : 0;
-    const tasksWithoutEstimation = tasks.filter((task: Task) => !estimations.some(est => est.task_id === task.id)).length;
+      ? Math.round(estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100)
+      : 0;
+    const tasksWithoutEstimation = tasks.filter((task: Task) => 
+      !estimations.some(est => est.task_id === task.id)
+    ).length;
 
     return { totalEstimations, avgConfidence, tasksWithoutEstimation };
   }, [estimations, tasks]);
