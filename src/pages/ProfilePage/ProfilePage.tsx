@@ -11,7 +11,6 @@ const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const { message, showMessage } = useTemporaryMessage();
   const [isLoading, setIsLoading] = useState(false);
-  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,7 +19,7 @@ const ProfilePage: React.FC = () => {
     new_password_confirmation: ''
   });
 
-  // Initialiser le formulaire avec les données de l'utilisateur connecté
+  // Initialiser le formulaire avec les données de l'utilisateur
   useEffect(() => {
     if (user) {
       setFormData({
@@ -43,7 +42,7 @@ const ProfilePage: React.FC = () => {
         email: formData.email
       };
 
-      // Si l'utilisateur tente de changer son mot de passe
+      // Si l'utilisateur veut changer son mot de passe
       if (formData.new_password || formData.new_password_confirmation) {
         if (formData.new_password !== formData.new_password_confirmation) {
           showMessage('Les mots de passe ne correspondent pas', 3000, 'error');
@@ -55,13 +54,7 @@ const ProfilePage: React.FC = () => {
         updateData.new_password_confirmation = formData.new_password_confirmation;
       }
 
-      // Appel API pour mettre à jour le profil
       await profileApi.updateProfile(updateData);
-      
-      // Mise à jour locale pour refléter les changements immédiatement
-      const updatedUser = { ...user, name: formData.name, email: formData.email };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      
       showMessage('Profil mis à jour avec succès !');
       
       // Réinitialiser les champs de mot de passe
@@ -84,7 +77,11 @@ const ProfilePage: React.FC = () => {
   };
 
   if (!user) {
-    return null; // useAuth gère normalement la redirection si non connecté
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loading}>Chargement...</div>
+      </div>
+    );
   }
 
   const initial = user.name ? user.name.charAt(0).toUpperCase() : '?';
@@ -102,7 +99,7 @@ const ProfilePage: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}> Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -191,7 +188,11 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <button type="submit" className={styles.primaryBtn} disabled={isLoading}>
+            <button 
+              type="submit" 
+              className={styles.primaryBtn}
+              disabled={isLoading}
+            >
               {isLoading ? 'Mise à jour...' : 'Mettre à jour le profil'}
             </button>
           </form>
