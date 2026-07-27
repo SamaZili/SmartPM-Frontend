@@ -18,6 +18,15 @@ export interface Project {
   updated_at: string;
 }
 
+export interface Estimation {
+  id: number;
+  task_id: number;
+  predicted_effort: number;
+  confidence_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Task {
   id: number;
   project_id: number;
@@ -25,15 +34,7 @@ export interface Task {
   description?: string;
   status: 'a_faire' | 'en_cours' | 'terminee';
   complexity?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Estimation {
-  id: number;
-  task_id: number;
-  predicted_effort: number;
-  confidence_score: number;
+  estimation?: Estimation | null; // ✅ AJOUTÉ ICI : C'est ce qui corrige l'erreur TypeScript
   created_at: string;
   updated_at: string;
 }

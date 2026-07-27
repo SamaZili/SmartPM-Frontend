@@ -7,7 +7,8 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
   const [isEstimating, setIsEstimating] = useState(false);
   const { showMessage } = useTemporaryMessage();
 
-  // ✅ Extraire les estimations DIRECTEMENT des tâches (qui viennent du backend avec `with('estimation')`)
+  // ✅ Extraire les estimations DIRECTEMENT des tâches 
+  // (Le backend les envoie déjà grâce à `->with('estimation')` dans TaskController)
   const estimations: Estimation[] = useMemo(
     () => tasks
       .filter(t => t.estimation)
@@ -23,7 +24,7 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
       await dashboardApi.estimateTask(selectedProjectId, taskId);
       showMessage('Estimation générée ! Rechargez la page pour voir le résultat.');
       
-      // Recharger la page pour récupérer les nouvelles données du backend
+      // Recharger la page pour récupérer les nouvelles données fraîches du backend
       setTimeout(() => {
         window.location.reload();
       }, 1500);
