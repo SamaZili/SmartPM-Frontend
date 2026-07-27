@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 // ✅ APRÈS (correct - remonte au bon niveau)
-import { Project, Task, Estimation } from '../../types';
+import {  Task, Estimation } from '../../types';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 
