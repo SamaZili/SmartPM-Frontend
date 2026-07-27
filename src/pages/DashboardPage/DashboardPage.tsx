@@ -14,10 +14,15 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { projects } = useProjects();
+  
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
+  // ✅ Le hook useTasks ne prend plus que l'ID du projet sélectionné
   const { tasks } = useTasks(selectedProject?.id || null);
-  // ✅ TOUTE la logique complexe est maintenant dans ce hook !
+  
+  // ✅ TOUTE la logique complexe (localStorage, calculs, appel API) est dans ce hook
   const { estimations, isLoading, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, tasks);
+  
   const stats = useDashboardStats(projects, tasks, estimations);
   const { message: successMsg, type: msgType } = useTemporaryMessage();
 
@@ -79,9 +84,18 @@ const DashboardPage: React.FC = () => {
             <h3>Insights de l'Intelligence Artificielle</h3>
           </div>
           <div className={styles.aiInsightMetrics}>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.totalEstimations}</span><span className={styles.aiMetricLabel}>Estimations réalisées</span></div>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.avgConfidence}%</span><span className={styles.aiMetricLabel}>Confiance moyenne</span></div>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.tasksWithoutEstimation}</span><span className={styles.aiMetricLabel}>Tâches en attente</span></div>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.totalEstimations}</span>
+              <span className={styles.aiMetricLabel}>Estimations réalisées</span>
+            </div>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.avgConfidence}%</span>
+              <span className={styles.aiMetricLabel}>Confiance moyenne</span>
+            </div>
+            <div className={styles.aiMetric}>
+              <span className={styles.aiMetricValue}>{aiInsights.tasksWithoutEstimation}</span>
+              <span className={styles.aiMetricLabel}>Tâches en attente</span>
+            </div>
           </div>
         </div>
 
@@ -109,8 +123,11 @@ const DashboardPage: React.FC = () => {
             <div className={styles.recentProjectsList}>
               {recentProjects.length > 0 ? recentProjects.map((project) => (
                 <div key={project.id} className={styles.recentProjectItem} onClick={() => setSelectedProject(project)}>
-                  <div className={styles.recentProjectIcon}>{project.name?.charAt(0)?.toUpperCase()}</div>
-                  <div className={styles.recentProjectInfo}><h4>{project.name}</h4><span>{project.status}</span></div>
+                  <div className={styles.recentProjectIcon}>{project.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
+                  <div className={styles.recentProjectInfo}>
+                    <h4>{project.name}</h4>
+                    <span>{project.status}</span>
+                  </div>
                 </div>
               )) : <p>Aucun projet</p>}
             </div>
@@ -125,8 +142,16 @@ const DashboardPage: React.FC = () => {
                 const hasEst = estimations.some(e => e.task_id === task.id);
                 return (
                   <div key={task.id} className={styles.taskItem}>
-                    <div><h4>{task.name}</h4><p>{task.description}</p></div>
-                    <button onClick={() => handleEstimate(task.id)} disabled={hasEst || isLoading} className={styles.estimateButton} style={hasEst ? { opacity: 0.5 } : {}}>
+                    <div>
+                      <h4>{task.name}</h4>
+                      <p>{task.description || 'Aucune description'}</p> {/* ✅ Sécurité ajoutée ici */}
+                    </div>
+                    <button 
+                      onClick={() => handleEstimate(task.id)} 
+                      disabled={hasEst || isLoading} 
+                      className={styles.estimateButton} 
+                      style={hasEst ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
                       {hasEst ? '✅ Fait' : isLoading ? '⏳...' : '🤖 Estimer'}
                     </button>
                   </div>
