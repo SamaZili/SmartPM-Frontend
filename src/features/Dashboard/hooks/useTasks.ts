@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { dashboardApi } from '../../Dashboard/api/dashboardApi';
 import { Task, CreateTaskDto, UpdateTaskStatusDto } from '../../../types';
 
-// ✅ Un seul argument ici : selectedProjectId
 export function useTasks(selectedProjectId: number | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -12,6 +11,7 @@ export function useTasks(selectedProjectId: number | null) {
       setTasks([]);
       return;
     }
+    
     setIsLoading(true);
     try {
       const response = await dashboardApi.getTasks(selectedProjectId);
