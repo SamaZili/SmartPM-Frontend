@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { profileApi } from '../../features/Profile/api/profileApi';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { User } from '../../types';
+import { User, UpdateProfileDto } from '../../types';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
@@ -9,23 +10,23 @@ const ProfilePage: React.FC = () => {
   const { message, showMessage } = useTemporaryMessage();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
   });
 
-  // Charger les données utilisateur depuis localStorage
+  // ✅ LIRE DIRECTEMENT DEPUIS LOCALSTORAGE (sans useAuth)
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
     
-    // Si pas de token, rediriger vers login
     if (!token) {
       navigate('/login');
       return;
     }
     
-    // Charger depuis localStorage
     if (storedUser) {
       try {
         const userData: User = JSON.parse(storedUser);
@@ -48,18 +49,36 @@ const ProfilePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mettre à jour localement
-    const updatedUser: User = {
-      ...user!,
-      name: formData.name,
-      email: formData.email,
-      updated_at: new Date().toISOString(),
-    };
-    
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    showMessage('Profil mis à jour avec succès !');
+    setIsSubmitting(true);
+
+    try {
+      const updateData: UpdateProfileDto = {
+        name: formData.name,
+        email: formData.email,
+      };
+
+      // Appel API pour sauvegarder en base de données
+      const response = await profileApi.updateProfile(updateData);
+      
+      if (response.success && response.data) {
+        // Mettre à jour le localStorage ET l'état local
+        const updatedUser: User = {
+          ...user!,
+          name: response.data.name || formData.name,
+          email: response.data.email || formData.email,
+        };
+        
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        showMessage('Profil mis à jour avec succès !');
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Erreur lors de la mise à jour';
+      showMessage(errorMsg, 5000, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleLogout = () => {
@@ -68,13 +87,19 @@ const ProfilePage: React.FC = () => {
     navigate('/login');
   };
 
-  // Afficher un loader pendant le chargement
   if (isLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Chargement du profil...</p>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh' 
+        }}>
+          <div>
+            <div className={styles.spinner}></div>
+            <p style={{ marginTop: '10px', color: '#666' }}>Chargement...</p>
+          </div>
         </div>
       </div>
     );
@@ -84,7 +109,7 @@ const ProfilePage: React.FC = () => {
     return null;
   }
 
-  const initial = user.name ? user.name.charAt(0).toUpperCase() : '?';
+  const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
   const userRole = user.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
 
   return (
@@ -99,7 +124,7 @@ const ProfilePage: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}> Projets</button>
           <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}> Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -115,11 +140,7 @@ const ProfilePage: React.FC = () => {
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>Mon Profil</h1>
 
-        {message && (
-          <div className={styles.alert}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.alert}>{message}</div>}
 
         <div className={styles.profileCard}>
           <div className={styles.profileHeader}>
@@ -141,6 +162,7 @@ const ProfilePage: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -151,12 +173,13 @@ const ProfilePage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
-            <button type="submit" className={styles.primaryBtn}>
-              Mettre à jour le profil
+            <button type="submit" className={styles.primaryBtn} disabled={isSubmitting}>
+              {isSubmitting ? 'Mise à jour...' : 'Mettre à jour le profil'}
             </button>
           </form>
         </div>

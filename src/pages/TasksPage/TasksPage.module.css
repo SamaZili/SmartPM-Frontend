@@ -302,10 +302,10 @@
   border-color: #10b981;
 }
 
-.aiBtn {
+/* Boutons d'action */
+.editBtn, .aiBtn, .deleteBtn {
   flex: 1;
   padding: 0.625rem 1rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -315,12 +315,41 @@
   transition: all 0.2s;
 }
 
-.aiBtn:hover {
+.editBtn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+.editBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.aiBtn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+.aiBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
 }
 
+.deleteBtn {
+  background-color: #ef4444;
+}
+.deleteBtn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+.editBtn:disabled, .aiBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Résultats d'estimation */
 .estimationResult {
   margin-top: 1.5rem;
   padding: 1.25rem;
@@ -368,4 +397,117 @@
   font-size: 1.125rem;
   font-weight: 600;
   color: #1e293b;
+}
+
+/* ==========================================
+   MODE ÉDITION
+   ========================================== */
+.editMode {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 1.5rem;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.editMode::before {
+  content: '✏️ Mode édition';
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.editMode .formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.editMode .formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #166534;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.editMode .input,
+.editMode .textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  background-color: white;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.editMode .input:focus,
+.editMode .textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.editMode .textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.editActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #bbf7d0;
+}
+
+.saveBtn, .cancelBtn {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.saveBtn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+.saveBtn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.cancelBtn {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+.cancelBtn:hover {
+  background-color: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: translateY(-1px);
 }

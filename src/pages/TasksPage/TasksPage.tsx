@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../../features/Projects/hooks/useProjects';
 import { useTasks } from '../../features/Tasks/hooks/useTasks';
@@ -11,11 +11,14 @@ const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  
   const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
+  
+  // ✅ CORRECTION 1 & 2 : Déstructuration d'objet (pas de tableau) et seulement 2 arguments
   const { estimations, isLoading: isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
   
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', description: '' });
   const { message, showMessage } = useTemporaryMessage();
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -25,7 +28,12 @@ const TasksPage: React.FC = () => {
       return;
     }
     try {
-      await addTask(selectedProject.id, { name: newTask.name, description: newTask.description || undefined, status: newTask.status, complexity: 'moyenne' });
+      await addTask(selectedProject.id, {
+        name: newTask.name,
+        description: newTask.description || undefined,
+        status: newTask.status,
+        complexity: 'moyenne',
+      });
       setNewTask({ name: '', description: '', status: 'a_faire' });
       showMessage('Tâche ajoutée avec succès !');
     } catch (err: any) {
@@ -45,9 +53,48 @@ const TasksPage: React.FC = () => {
     }
   };
 
+  const handleEditClick = (task: Task) => {
+    setEditingTask(task);
+    setEditForm({
+      name: task.name,
+      description: task.description || '',
+    });
+  };
+
+  const handleEditSave = async (taskId: number) => {
+    if (!editForm.name.trim()) {
+      showMessage('Le nom de la tâche est requis', 3000, 'error');
+      return;
+    }
+
+    try {
+      if (!selectedProject) return;
+      
+      await updateTaskStatus(selectedProject.id, taskId, {
+        status: tasks.find(t => t.id === taskId)?.status || 'a_faire',
+        ...editForm,
+      });
+      
+      setEditingTask(null);
+      showMessage('Tâche modifiée avec succès !');
+    } catch (err: any) {
+      showMessage(err.message || 'Erreur lors de la modification.', 5000, 'error');
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingTask(null);
+    setEditForm({ name: '', description: '' });
+  };
+
   const getEstimationForTask = (taskId: number) => estimations.find(e => e.task_id === taskId);
+
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = { a_faire: '#94a3b8', en_cours: '#f59e0b', terminee: '#10b981' };
+    const colors: Record<string, string> = {
+      a_faire: '#94a3b8',
+      en_cours: '#f59e0b',
+      terminee: '#10b981',
+    };
     return colors[status] || '#64748b';
   };
 
@@ -70,7 +117,9 @@ const TasksPage: React.FC = () => {
             <p className={styles.userName}>Admin Test</p>
             <p className={styles.userRole}>Chef de projet</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>Déconnexion</button>
+          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
+            Déconnexion
+          </button>
         </div>
       </aside>
 
@@ -82,7 +131,11 @@ const TasksPage: React.FC = () => {
           <h2>Sélectionnez un projet</h2>
           <div className={styles.projectsGrid}>
             {projects.map((project: Project) => (
-              <div key={project.id} className={`${styles.projectCard} ${selectedProject?.id === project.id ? styles.selected : ''}`} onClick={() => setSelectedProject(project)}>
+              <div
+                key={project.id}
+                className={`${styles.projectCard} ${selectedProject?.id === project.id ? styles.selected : ''}`}
+                onClick={() => setSelectedProject(project)}
+              >
                 <div className={styles.projectIcon}>{project.name.charAt(0).toUpperCase()}</div>
                 <h3>{project.name}</h3>
                 <p className={styles.projectDesc}>{project.description || 'Aucune description'}</p>
@@ -96,9 +149,23 @@ const TasksPage: React.FC = () => {
           <section className={styles.section}>
             <h2>Tâches pour : <span className={styles.highlight}>{selectedProject.name}</span></h2>
             <form onSubmit={handleAddTask} className={styles.taskForm}>
-              <input type="text" placeholder="Nom de la tâche..." value={newTask.name} onChange={(e) => setNewTask({...newTask, name: e.target.value})} required />
-              <textarea placeholder="Description..." value={newTask.description} onChange={(e) => setNewTask({...newTask, description: e.target.value})} rows={2} />
-              <select value={newTask.status} onChange={(e) => setNewTask({...newTask, status: e.target.value})}>
+              <input
+                type="text"
+                placeholder="Nom de la tâche..."
+                value={newTask.name}
+                onChange={(e) => setNewTask({...newTask, name: e.target.value})}
+                required
+              />
+              <textarea
+                placeholder="Description..."
+                value={newTask.description}
+                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                rows={2}
+              />
+              <select
+                value={newTask.status}
+                onChange={(e) => setNewTask({...newTask, status: e.target.value})}
+              >
                 <option value="a_faire">À faire</option>
                 <option value="en_cours">En cours</option>
                 <option value="terminee">Terminée</option>
@@ -109,35 +176,102 @@ const TasksPage: React.FC = () => {
             <div className={styles.tasksList}>
               {tasks.map((task: Task) => {
                 const estimation = getEstimationForTask(task.id);
+                
                 return (
                   <div key={task.id} className={styles.taskCard}>
-                    <div className={styles.taskHeader}>
-                      <h4>{task.name}</h4>
-                      <span className={styles.taskStatus} style={{ backgroundColor: getStatusColor(task.status) }}>{task.status}</span>
-                    </div>
-                    <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
-                    <div className={styles.taskActions}>
-                      <select value={task.status} onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })} className={styles.statusSelect}>
-                        <option value="a_faire">À faire</option>
-                        <option value="en_cours">En cours</option>
-                        <option value="terminee">Terminée</option>
-                      </select>
-                      <button onClick={() => handleEstimate(task.id)} disabled={isEstimating || !!estimation} className={styles.aiBtn} style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
-                        {isEstimating ? '⏳...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
-                      </button>
-                      <button onClick={() => handleDeleteTask(task.id)} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600', marginLeft: '0.5rem' }}>🗑️</button>
-                    </div>
-                    {estimation && (
-                      <div className={styles.estimationResult}>
-                        <div className={styles.estimationHeader}>
-                          <span className={styles.estimationTitle}>📊 Résultat</span>
-                          <span className={styles.estimationDate}>{new Date(estimation.created_at).toLocaleDateString('fr-FR')}</span>
+                    {editingTask?.id === task.id ? (
+                      // MODE ÉDITION
+                      <div className={styles.editMode}>
+                        <div className={styles.formGroup}>
+                          <label>Nom de la tâche</label>
+                          {/* ✅ CORRECTION 3 : Ajout du type React.ChangeEvent */}
+                          <input
+                            type="text"
+                            value={editForm.name}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({...editForm, name: e.target.value})}
+                            className={styles.input}
+                            autoFocus
+                          />
                         </div>
-                        <div className={styles.estimationGrid}>
-                          <div className={styles.estimationItem}><span className={styles.estimationLabel}>Effort</span><span className={styles.estimationValue}>{estimation.predicted_effort}h</span></div>
-                          <div className={styles.estimationItem}><span className={styles.estimationLabel}>Confiance</span><span className={styles.estimationValue}>{Math.round(estimation.confidence_score * 100)}%</span></div>
+                        <div className={styles.formGroup}>
+                          <label>Description</label>
+                          {/* ✅ CORRECTION 3 : Ajout du type React.ChangeEvent */}
+                          <textarea
+                            value={editForm.description}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({...editForm, description: e.target.value})}
+                            className={styles.textarea}
+                            rows={2}
+                          />
+                        </div>
+                        <div className={styles.editActions}>
+                          <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>
+                            ✅ Sauvegarder
+                          </button>
+                          <button onClick={handleEditCancel} className={styles.cancelBtn}>
+                            ❌ Annuler
+                          </button>
                         </div>
                       </div>
+                    ) : (
+                      // MODE AFFICHAGE NORMAL
+                      <>
+                        <div className={styles.taskHeader}>
+                          <h4>{task.name}</h4>
+                          <span className={styles.taskStatus} style={{ backgroundColor: getStatusColor(task.status) }}>
+                            {task.status === 'a_faire' ? 'À faire' : task.status === 'en_cours' ? 'En cours' : 'Terminée'}
+                          </span>
+                        </div>
+                        <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
+                        <div className={styles.taskActions}>
+                          <select
+                            value={task.status}
+                            onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })}
+                            className={styles.statusSelect}
+                          >
+                            <option value="a_faire">À faire</option>
+                            <option value="en_cours">En cours</option>
+                            <option value="terminee">Terminée</option>
+                          </select>
+                          <button
+                            onClick={() => handleEditClick(task)}
+                            className={styles.editBtn}
+                            disabled={isEstimating}
+                          >
+                            ✏️ Modifier
+                          </button>
+                          <button
+                            onClick={() => handleEstimate(task.id)}
+                            disabled={isEstimating || !!estimation}
+                            className={styles.aiBtn}
+                            style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                          >
+                            {isEstimating ? '⏳...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
+                          </button>
+                          <button onClick={() => handleDeleteTask(task.id)} className={styles.deleteBtn}>
+                            🗑️
+                          </button>
+                        </div>
+                        {estimation && (
+                          <div className={styles.estimationResult}>
+                            <div className={styles.estimationHeader}>
+                              <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
+                              <span className={styles.estimationDate}>
+                                {new Date(estimation.created_at).toLocaleDateString('fr-FR')}
+                              </span>
+                            </div>
+                            <div className={styles.estimationGrid}>
+                              <div className={styles.estimationItem}>
+                                <span className={styles.estimationLabel}>Effort estimé</span>
+                                <span className={styles.estimationValue}>{estimation.predicted_effort} heures</span>
+                              </div>
+                              <div className={styles.estimationItem}>
+                                <span className={styles.estimationLabel}>Confiance IA</span>
+                                <span className={styles.estimationValue}>{Math.round(estimation.confidence_score * 100)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 );
