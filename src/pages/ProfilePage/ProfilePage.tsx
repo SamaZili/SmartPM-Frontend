@@ -1,83 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/Auth/hooks/useAuth';
+import { profileApi } from '../../features/Profile/api/profileApi';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
+import { UpdateProfileDto } from '../../types';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { message, showMessage } = useTemporaryMessage();
+  const [isLoading, setIsLoading] = useState(false);
   
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    current_password: '',
+    new_password: '',
+    new_password_confirmation: ''
   });
 
+  // Initialiser le formulaire avec les données de l'utilisateur connecté
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
+    if (user) {
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
+        name: user.name || '',
+        email: user.email || '',
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: ''
       });
-    } else {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const fallbackUser = {
-          id: payload.sub || payload.id || 1,
-          name: payload.name || 'Utilisateur',
-          email: payload.email || '',
-          type: payload.type || 'chef_de_projet',
-        };
-        setUser(fallbackUser);
-        setFormData({
-          name: fallbackUser.name,
-          email: fallbackUser.email,
-        });
-        localStorage.setItem('user', JSON.stringify(fallbackUser));
-      } catch (err) {
-        console.error('Erreur décodage token:', err);
-        navigate('/login');
-      }
     }
-    
-    setIsLoading(false);
-  }, [navigate]);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedUser = { ...user, ...formData };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    showMessage('Profil mis à jour avec succès !');
+    setIsLoading(true);
+
+    try {
+      const updateData: UpdateProfileDto = {
+        name: formData.name,
+        email: formData.email
+      };
+
+      // Si l'utilisateur tente de changer son mot de passe
+      if (formData.new_password || formData.new_password_confirmation) {
+        if (formData.new_password !== formData.new_password_confirmation) {
+          showMessage('Les mots de passe ne correspondent pas', 3000, 'error');
+          setIsLoading(false);
+          return;
+        }
+        updateData.current_password = formData.current_password;
+        updateData.new_password = formData.new_password;
+        updateData.new_password_confirmation = formData.new_password_confirmation;
+      }
+
+      // Appel API pour mettre à jour le profil
+      await profileApi.updateProfile(updateData);
+      
+      // Mise à jour locale pour refléter les changements immédiatement
+      const updatedUser = { ...user, name: formData.name, email: formData.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      showMessage('Profil mis à jour avec succès !');
+      
+      // Réinitialiser les champs de mot de passe
+      setFormData(prev => ({
+        ...prev,
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: ''
+      }));
+    } catch (err: any) {
+      showMessage(err.response?.data?.message || 'Erreur lors de la mise à jour', 5000, 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.pageContainer}>
-        <div className={styles.loading}>Chargement...</div>
-      </div>
-    );
-  }
-
   if (!user) {
-    return null;
+    return null; // useAuth gère normalement la redirection si non connecté
   }
 
   const initial = user.name ? user.name.charAt(0).toUpperCase() : '?';
@@ -92,7 +99,7 @@ const ProfilePage: React.FC = () => {
         </div>
         
         <nav className={styles.navMenu}>
-          <button onClick={() => navigate('/dashboard')} className={styles.navButton}> Tableau de bord</button>
+          <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
@@ -104,9 +111,7 @@ const ProfilePage: React.FC = () => {
             <p className={styles.userName}>{user.name}</p>
             <p className={styles.userRole}>{userRole}</p>
           </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>
-            Déconnexion
-          </button>
+          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </aside>
 
@@ -135,6 +140,7 @@ const ProfilePage: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -145,12 +151,48 @@ const ProfilePage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
 
-            <button type="submit" className={styles.primaryBtn}>
-              Mettre à jour le profil
+            <div className={styles.formSection}>
+              <h3>Changer le mot de passe</h3>
+              <p className={styles.hint}>Laissez vide pour conserver votre mot de passe actuel</p>
+              
+              <div className={styles.formGroup}>
+                <label>Mot de passe actuel</label>
+                <input
+                  type="password"
+                  value={formData.current_password}
+                  onChange={(e) => setFormData({...formData, current_password: e.target.value})}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Nouveau mot de passe</label>
+                <input
+                  type="password"
+                  value={formData.new_password}
+                  onChange={(e) => setFormData({...formData, new_password: e.target.value})}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Confirmation du nouveau mot de passe</label>
+                <input
+                  type="password"
+                  value={formData.new_password_confirmation}
+                  onChange={(e) => setFormData({...formData, new_password_confirmation: e.target.value})}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <button type="submit" className={styles.primaryBtn} disabled={isLoading}>
+              {isLoading ? 'Mise à jour...' : 'Mettre à jour le profil'}
             </button>
           </form>
         </div>
