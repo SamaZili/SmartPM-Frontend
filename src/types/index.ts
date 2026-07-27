@@ -31,13 +31,18 @@ export interface Task {
   updated_at: string;
 }
 
+// ✅ CORRECTION : updated_at rendu optionnel car le backend FastAPI ne le retourne pas toujours
+// ✅ CORRECTION : Ajout des champs optionnels qui peuvent venir du backend
 export interface Estimation {
   id: number;
   task_id: number;
   predicted_effort: number;
   confidence_score: number;
   created_at: string;
-  updated_at: string; // ← Important pour éviter l'erreur TS2741
+  updated_at?: string;           // ← Optionnel (évite l'erreur TS2741)
+  project_id?: number;           // ← Optionnel (utilisé dans useEstimations)
+  task_name?: string;            // ← Optionnel (utilisé dans useEstimations)
+  task_description?: string;     // ← Optionnel (utilisé dans useEstimations)
 }
 
 export interface DashboardStats {
@@ -53,17 +58,62 @@ export interface DashboardStats {
 }
 
 // --- DTOs (Data Transfer Objects) pour les API ---
-export interface LoginDto { email: string; password: string; }
-export interface RegisterDto { name: string; email: string; password: string; password_confirmation: string; type: string; }
-export interface ForgotPasswordDto { email: string; }
-export interface ResetPasswordDto { token: string; password: string; password_confirmation: string; }
-export interface UpdateProfileDto { name?: string; email?: string; current_password?: string; new_password?: string; new_password_confirmation?: string; }
-export interface CreateProjectDto { name: string; description?: string; status?: string; }
-export interface CreateTaskDto { name: string; description?: string; status?: string; complexity?: string; }
-export interface UpdateTaskStatusDto { status: string; }
+export interface LoginDto { 
+  email: string; 
+  password: string; 
+}
 
+export interface RegisterDto { 
+  name: string; 
+  email: string; 
+  password: string; 
+  password_confirmation: string; 
+  type: string; 
+}
+
+export interface ForgotPasswordDto { 
+  email: string; 
+}
+
+export interface ResetPasswordDto { 
+  token: string; 
+  password: string; 
+  password_confirmation: string; 
+}
+
+// ✅ CORRECTION : Ajout de `password` et `password_confirmation` pour compatibilité Laravel
+export interface UpdateProfileDto { 
+  name?: string; 
+  email?: string; 
+  current_password?: string; 
+  password?: string;                        // ← Ajouté (standard Laravel)
+  password_confirmation?: string;           // ← Ajouté (standard Laravel)
+  new_password?: string;                    // ← Conservé pour compatibilité
+  new_password_confirmation?: string;       // ← Conservé pour compatibilité
+}
+
+export interface CreateProjectDto { 
+  name: string; 
+  description?: string; 
+  status?: string; 
+}
+
+export interface CreateTaskDto { 
+  name: string; 
+  description?: string; 
+  status?: string; 
+  complexity?: string; 
+}
+
+export interface UpdateTaskStatusDto { 
+  status: string; 
+}
+
+// ✅ CORRECTION : Ajout de error_code et message_code pour gérer les erreurs Laravel
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
+  error_code?: string;
+  message_code?: string;
 }

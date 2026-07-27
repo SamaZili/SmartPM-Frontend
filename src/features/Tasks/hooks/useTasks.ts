@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { dashboardApi } from '../../Dashboard/api/dashboardApi';
 import { Task, CreateTaskDto, UpdateTaskStatusDto } from '../../../types';
 
-export function useTasks(selectedProjectId: number | null) {
+export function useTasks(projects: any[], selectedProjectId: number | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,10 +15,8 @@ export function useTasks(selectedProjectId: number | null) {
     setIsLoading(true);
     try {
       const response = await dashboardApi.getTasks(selectedProjectId);
-      // Extraire les données de la réponse API
-      const tasksData = response.data || response;
-      if (tasksData) {
-        setTasks(Array.isArray(tasksData) ? tasksData : []);
+      if (response) {
+        setTasks(Array.isArray(response) ? response : []);
       }
     } catch (error) {
       console.error('Erreur chargement tâches:', error);
@@ -30,11 +28,9 @@ export function useTasks(selectedProjectId: number | null) {
   const addTask = useCallback(async (projectId: number, data: CreateTaskDto) => {
     try {
       const response = await dashboardApi.createTask(projectId, data);
-      // Extraire la tâche de la réponse
-      const newTask = response.data || response;
-      if (newTask) {
-        setTasks(prev => [...prev, newTask as Task]);
-        return newTask as Task;
+      if (response) {
+        setTasks(prev => [...prev, response]);
+        return response;
       }
     } catch (error) {
       console.error('Erreur création tâche:', error);
@@ -45,11 +41,9 @@ export function useTasks(selectedProjectId: number | null) {
   const updateTaskStatus = useCallback(async (projectId: number, taskId: number, data: UpdateTaskStatusDto) => {
     try {
       const response = await dashboardApi.updateTaskStatus(projectId, taskId, data);
-      // Extraire la tâche mise à jour
-      const updatedTask = response.data || response;
-      if (updatedTask) {
-        setTasks(prev => prev.map(t => t.id === taskId ? (updatedTask as Task) : t));
-        return updatedTask as Task;
+      if (response) {
+        setTasks(prev => prev.map(t => t.id === taskId ? response : t));
+        return response;
       }
     } catch (error) {
       console.error('Erreur mise à jour tâche:', error);
@@ -73,13 +67,13 @@ export function useTasks(selectedProjectId: number | null) {
     }
   }, [selectedProjectId, fetchTasks]);
 
-  return { 
-    tasks, 
-    isLoading, 
+  return {
+    tasks,
+    isLoading,
     fetchTasks,
-    addTask, 
+    addTask,
     updateTaskStatus,
     removeTask,
-    setTasks 
+    setTasks
   };
 }

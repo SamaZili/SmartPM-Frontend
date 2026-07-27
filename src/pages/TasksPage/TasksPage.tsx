@@ -11,17 +11,16 @@ const TasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  
-  // ✅ 1. DÉSTRUCTURER removeTask ICI
-  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
+  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(projects, selectedProject?.id || null);
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [loadingEstimates, setLoadingEstimates] = useState<Set<number>>(new Set());
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
   const { message, showMessage } = useTemporaryMessage();
 
-  // ✅ 2. CHARGER les estimations au démarrage depuis le localStorage
+  // ✅ CHARGER au démarrage
   useEffect(() => {
     const saved = localStorage.getItem('smartpm_estimations');
+    console.log(' TasksPage: Chargement localStorage:', saved);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -30,15 +29,15 @@ const TasksPage: React.FC = () => {
           console.log('✅ TasksPage: Estimations chargées:', parsed.length);
         }
       } catch (e) {
-        console.error('❌ Erreur de parsing des estimations:', e);
+        console.error('❌ Erreur parsing:', e);
       }
     }
   }, []);
 
-  // ✅ 3. SAUVEGARDER automatiquement à chaque modification du state
+  // ✅ SAUVEGARDER à chaque modification
   useEffect(() => {
+    console.log('💾 TasksPage: Sauvegarde de', estimations.length, 'estimations');
     localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
-    console.log('💾 TasksPage: Estimations sauvegardées:', estimations.length);
   }, [estimations]);
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -47,7 +46,6 @@ const TasksPage: React.FC = () => {
       showMessage('Veuillez remplir tous les champs', 3000, 'error');
       return;
     }
-
     try {
       await addTask(selectedProject.id, {
         name: newTask.name,
@@ -62,11 +60,9 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  // ✅ 4. FONCTION DE SUPPRESSION DE TÂCHE
   const handleDeleteTask = async (taskId: number) => {
     if (!selectedProject) return;
-    
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
       try {
         await removeTask(selectedProject.id, taskId);
         showMessage('Tâche supprimée avec succès !');
@@ -76,20 +72,16 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  // ✅ 5. FONCTION D'ESTIMATION ROBUSTE
   const handleEstimate = async (taskId: number) => {
     if (!selectedProject) return;
-    
     setLoadingEstimates(prev => new Set(prev).add(taskId));
-    
     try {
       const response = await dashboardApi.estimateTask(selectedProject.id, taskId);
-      console.log('🔍 RÉPONSE BRUTE DU BACKEND:', response);
-
-      // Extraction robuste (gère tous les formats de réponse possibles)
-      const estimationData: Estimation | undefined = 
-        response.data || 
-        (response as any).estimation || 
+      console.log('🔍 TasksPage: Réponse API:', response);
+      
+      const estimationData: Estimation | undefined =
+        response.data ||
+        (response as any).estimation ||
         (response as any).data?.estimation;
 
       if (estimationData) {
@@ -98,17 +90,17 @@ const TasksPage: React.FC = () => {
           if (exists) {
             return prev.map(e => e.task_id === estimationData.task_id ? estimationData : e);
           }
-          return [...prev, estimationData];
+          const updated = [...prev, estimationData];
+          console.log('📦 TasksPage: Nouvelles estimations:', updated);
+          return updated;
         });
         showMessage('Estimation IA générée et sauvegardée !');
       } else {
-        console.error('⚠️ Aucune donnée d\'estimation trouvée dans la réponse:', response);
-        showMessage('Erreur: Réponse du serveur invalide', 3000, 'error');
+        console.error('⚠️ Aucune donnée trouvée');
+        showMessage('Erreur: Réponse invalide', 3000, 'error');
       }
-
     } catch (err: any) {
-      // FALLBACK LOCAL si l'API échoue
-      console.warn('⚠️ API indisponible, utilisation du mode local');
+      console.warn('⚠️ API indisponible, mode local');
       const now = new Date().toISOString();
       const fakeEstimation: Estimation = {
         id: Date.now(),
@@ -116,18 +108,18 @@ const TasksPage: React.FC = () => {
         predicted_effort: Math.floor(Math.random() * 8) + 2,
         confidence_score: 0.75 + Math.random() * 0.20,
         created_at: now,
-        updated_at: now, // Requis par le type Estimation
+        updated_at: now,
       };
-
       setEstimations(prev => {
         const exists = prev.some(e => e.task_id === taskId);
         if (exists) {
           showMessage('Déjà estimée !', 3000, 'error');
           return prev;
         }
-        return [...prev, fakeEstimation];
+        const updated = [...prev, fakeEstimation];
+        console.log('📦 TasksPage: Estimation locale ajoutée:', updated);
+        return updated;
       });
-
       showMessage('Estimation générée (mode local) !');
     } finally {
       setLoadingEstimates(prev => {
@@ -158,14 +150,12 @@ const TasksPage: React.FC = () => {
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
           <h1 className={styles.logoText}>SmartPM</h1>
         </div>
-        
         <nav className={styles.navMenu}>
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}> Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
-          <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
+          <button onClick={() => navigate('/profile')} className={styles.navButton}> Profil</button>
         </nav>
-
         <div className={styles.userInfo}>
           <div className={styles.userAvatar}>AT</div>
           <div className={styles.userDetails}>
@@ -180,10 +170,7 @@ const TasksPage: React.FC = () => {
 
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>Gestion des Tâches</h1>
-
-        {message && (
-          <div className={styles.alert}>{message}</div>
-        )}
+        {message && <div className={styles.alert}>{message}</div>}
 
         <section className={styles.section}>
           <h2>Sélectionnez un projet</h2>
@@ -206,7 +193,6 @@ const TasksPage: React.FC = () => {
         {selectedProject && (
           <section className={styles.section}>
             <h2>Tâches pour : <span className={styles.highlight}>{selectedProject.name}</span></h2>
-            
             <form onSubmit={handleAddTask} className={styles.taskForm}>
               <input
                 type="text"
@@ -236,21 +222,18 @@ const TasksPage: React.FC = () => {
               {tasks.map((task: Task) => {
                 const estimation = getEstimationForTask(task.id);
                 const isLoading = loadingEstimates.has(task.id);
-
                 return (
                   <div key={task.id} className={styles.taskCard}>
                     <div className={styles.taskHeader}>
                       <h4>{task.name}</h4>
-                      <span 
+                      <span
                         className={styles.taskStatus}
                         style={{ backgroundColor: getStatusColor(task.status) }}
                       >
                         {task.status}
                       </span>
                     </div>
-                    
                     <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
-                    
                     <div className={styles.taskActions}>
                       <select
                         value={task.status}
@@ -261,7 +244,6 @@ const TasksPage: React.FC = () => {
                         <option value="en_cours">En cours</option>
                         <option value="terminee">Terminée</option>
                       </select>
-                      
                       <button
                         onClick={() => handleEstimate(task.id)}
                         disabled={isLoading || !!estimation}
@@ -270,8 +252,6 @@ const TasksPage: React.FC = () => {
                       >
                         {isLoading ? '⏳ Estimation...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
                       </button>
-
-                      {/* ✅ 6. BOUTON SUPPRIMER AJOUTÉ ICI */}
                       <button
                         onClick={() => handleDeleteTask(task.id)}
                         style={{
@@ -283,19 +263,12 @@ const TasksPage: React.FC = () => {
                           cursor: 'pointer',
                           fontSize: '0.875rem',
                           fontWeight: '600',
-                          marginLeft: '0.5rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
+                          marginLeft: '0.5rem'
                         }}
-                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
                       >
-                        🗑️ Supprimer
+                        🗑️
                       </button>
                     </div>
-
-                    {/* AFFICHAGE DU RÉSULTAT SUR LA TÂCHE */}
                     {estimation && (
                       <div className={styles.estimationResult}>
                         <div className={styles.estimationHeader}>
