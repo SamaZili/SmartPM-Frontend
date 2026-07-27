@@ -8,32 +8,59 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
   const [isLoading, setIsLoading] = useState(false);
   const { showMessage } = useTemporaryMessage();
 
-  // 1. Charger depuis localStorage au démarrage
+  // ✅ 1. CHARGER les estimations DEPUIS LE BACKEND au démarrage
   useEffect(() => {
-    const stored = localStorage.getItem('smartpm_estimations');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) setEstimations(parsed);
-      } catch (e) {
-        console.error("Erreur chargement estimations:", e);
-      }
+    if (!selectedProjectId) {
+      setEstimations([]);
+      return;
     }
-  }, []);
 
-  // 2. Sauvegarder dans localStorage à chaque modification
+    const loadEstimations = async () => {
+      setIsLoading(true);
+      try {
+        const response = await dashboardApi.getEstimations(selectedProjectId);
+        if (response && Array.isArray(response)) {
+          setEstimations(response);
+        }
+      } catch (error) {
+        console.error('Erreur chargement estimations:', error);
+        // Fallback : essayer le localStorage si le backend échoue
+        const stored = localStorage.getItem('smartpm_estimations');
+        if (stored) {
+          try {
+            setEstimations(JSON.parse(stored));
+          } catch (e) {
+            console.error('Erreur parsing localStorage:', e);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEstimations();
+  }, [selectedProjectId]);
+
+  // ✅ 2. SAUVEGARDER dans le localStorage (backup uniquement)
   useEffect(() => {
-    localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
+    if (estimations.length > 0) {
+      localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
+    }
   }, [estimations]);
 
-  // 3. Logique d'estimation (API + Fallback local)
+  // ✅ 3. LOGIQUE D'ESTIMATION (appel backend + fallback local)
   const handleEstimate = useCallback(async (taskId: number) => {
     if (!selectedProjectId) return;
     setIsLoading(true);
+
     try {
       const response = await dashboardApi.estimateTask(selectedProjectId, taskId);
-      const estimationData: Estimation | undefined = 
-        response.data || (response as any).estimation || (response as any).data?.estimation;
+      
+      // Extraction robuste de la donnée
+      const estimationData: Estimation | undefined =
+        response.data ||
+        (response as any).estimation ||
+        (response as any).data?.estimation;
 
       if (estimationData) {
         setEstimations(prev => {
@@ -44,10 +71,13 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
           }
           return [...prev, estimationData];
         });
-        showMessage('Estimation générée !');
+        showMessage('Estimation générée et sauvegardée !');
+      } else {
+        throw new Error('Réponse API invalide');
       }
     } catch (err) {
-      // Fallback local si l'API échoue
+      // FALLBACK LOCAL si le backend est indisponible
+      console.warn('Backend indisponible, mode local activé');
       const now = new Date().toISOString();
       const fakeEstimation: Estimation = {
         id: Date.now(),
@@ -71,18 +101,18 @@ export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) 
     }
   }, [selectedProjectId, showMessage]);
 
-  // 4. Calcul des Insights IA
+  // ✅ 4. CALCUL DES INSIGHTS IA
   const aiInsights = useMemo(() => {
     const totalEstimations = estimations.length;
     const avgConfidence = totalEstimations > 0
       ? Math.round(estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100)
       : 0;
-    const tasksWithoutEstimation = tasks.filter((task: Task) => 
+    const tasksWithoutEstimation = tasks.filter((task: Task) =>
       !estimations.some(est => est.task_id === task.id)
     ).length;
 
     return { totalEstimations, avgConfidence, tasksWithoutEstimation };
   }, [estimations, tasks]);
 
-  return { estimations, isLoading, handleEstimate, aiInsights, setEstimations };
+  return { estimations, isLoading, handleEstimate, aiInsights };
 };

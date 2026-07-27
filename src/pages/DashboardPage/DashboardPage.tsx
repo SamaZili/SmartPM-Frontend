@@ -1,12 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useProjects } from '../../features/Projects/hooks/useProjects';
 import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
+import { useEstimations } from '../../features/Dashboard/hooks/useEstimations';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { Project, Task, Estimation } from '../../types';
+import { Project, Task } from '../../types';
 import styles from './DashboardPage.module.css';
 
 const DashboardPage: React.FC = () => {
@@ -15,52 +16,12 @@ const DashboardPage: React.FC = () => {
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks } = useTasks(selectedProject?.id || null);
-  const [estimations, setEstimations] = useState<Estimation[]>([]);
-  const { message: successMsg, type: msgType } = useTemporaryMessage();
-
-  // ✅ CHARGER au démarrage (MÊME CLÉ QUE TASKSPAGE)
-  useEffect(() => {
-    console.log(' Dashboard: Chargement...');
-    const stored = localStorage.getItem('smartpm_estimations');
-    console.log('🔍 Dashboard: Valeur localStorage:', stored);
-    
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setEstimations(parsed);
-          console.log('✅ Dashboard: Estimations chargées:', parsed.length);
-        } else {
-          console.error('❌ Dashboard: Ce n\'est pas un tableau');
-        }
-      } catch (e) {
-        console.error('❌ Dashboard: Erreur parsing:', e);
-      }
-    } else {
-      console.warn('⚠️ Dashboard: localStorage vide');
-    }
-  }, []);
-
-  // ✅ SAUVEGARDER
-  useEffect(() => {
-    console.log('💾 Dashboard: Sauvegarde de', estimations.length, 'estimations');
-    localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
-  }, [estimations]);
-
+  
+  // ✅ Utiliser le hook useEstimations (qui charge depuis le backend)
+  const { estimations, isLoading, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, tasks);
+  
   const stats = useDashboardStats(projects, tasks, estimations);
-
-  const aiInsights = useMemo(() => {
-    console.log(' Dashboard: Calcul insights avec', estimations.length, 'estimations');
-    const totalEstimations = estimations.length;
-    const avgConfidence = totalEstimations > 0
-      ? Math.round(estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100)
-      : 0;
-    const tasksWithoutEstimation = tasks.filter((task: Task) =>
-      !estimations.some(est => est.task_id === task.id)
-    ).length;
-    console.log('✅ Dashboard: Résultats:', { totalEstimations, avgConfidence, tasksWithoutEstimation });
-    return { totalEstimations, avgConfidence, tasksWithoutEstimation };
-  }, [estimations, tasks]);
+  const { message: successMsg, type: msgType } = useTemporaryMessage();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -180,12 +141,12 @@ const DashboardPage: React.FC = () => {
                   <div key={task.id} className={styles.taskItem}>
                     <div><h4>{task.name}</h4><p>{task.description}</p></div>
                     <button
-                      onClick={() => {}}
-                      disabled={hasEst}
+                      onClick={() => handleEstimate(task.id)}
+                      disabled={hasEst || isLoading}
                       className={styles.estimateButton}
                       style={hasEst ? { opacity: 0.5 } : {}}
                     >
-                      {hasEst ? '✅ Estimée' : '🤖 Estimer'}
+                      {hasEst ? '✅ Fait' : isLoading ? '⏳...' : ' Estimer'}
                     </button>
                   </div>
                 );
