@@ -1,82 +1,56 @@
 import { useState, useEffect, useCallback } from 'react';
-import { dashboardApi, CreateTaskDto, UpdateTaskStatusDto } from '../api/dashboardApi';
-import { Task, Project } from '../../../types';
+import { dashboardApi } from '../../Dashboard/api/dashboardApi';
+import { Task, CreateTaskDto, UpdateTaskStatusDto } from '../../../types';
 
-export function useTasks(projects: Project[], selectedProjectId: number | null) {
+// ✅ Un seul argument ici : selectedProjectId
+export function useTasks(selectedProjectId: number | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
 
   const fetchTasks = useCallback(async () => {
     if (!selectedProjectId) {
       setTasks([]);
       return;
     }
-    
     setIsLoading(true);
-    setError('');
-    
     try {
       const response = await dashboardApi.getTasks(selectedProjectId);
-      if (response.success && response.data) {
-        setTasks(response.data);
+      const tasksData = response?.data || response;
+      if (tasksData) {
+        setTasks(Array.isArray(tasksData) ? tasksData : []);
       }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Impossible de charger les tâches.';
-      setError(errorMessage);
+    } catch (error) {
+      console.error('Erreur chargement tâches:', error);
     } finally {
       setIsLoading(false);
     }
   }, [selectedProjectId]);
 
-  const fetchAllTasks = useCallback(async () => {
-    if (projects.length === 0) {
-      setTasks([]);
-      return;
-    }
-    
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      // ✅ CORRECTION N+1 : Requêtes parallèles avec Promise.all
-      const projectIds = projects.map(p => p.id);
-      const responses = await dashboardApi.getAllTasks(projectIds);
-      
-      const allTasks = responses.flatMap(res => 
-        (res.success && res.data) ? res.data : []
-      );
-      
-      setTasks(allTasks);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Impossible de charger les tâches.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projects]);
-
   const addTask = useCallback(async (projectId: number, data: CreateTaskDto) => {
     try {
       const response = await dashboardApi.createTask(projectId, data);
-      if (response.success && response.data) {
-        setTasks(prev => [...prev, response.data!]);
-        return response.data;
+      const newTask = response?.data || response;
+      if (newTask) {
+        setTasks(prev => [...prev, newTask as Task]);
+        return newTask as Task;
       }
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || 'Erreur lors de la création.');
+    } catch (error) {
+      console.error('Erreur création tâche:', error);
+      throw error;
     }
   }, []);
 
   const updateTaskStatus = useCallback(async (projectId: number, taskId: number, data: UpdateTaskStatusDto) => {
     try {
       const response = await dashboardApi.updateTaskStatus(projectId, taskId, data);
-      if (response.success && response.data) {
-        setTasks(prev => prev.map(t => t.id === taskId ? response.data! : t));
-        return response.data;
+      const updatedTask = response?.data || response;
+      if (updatedTask) {
+        setTasks(prev => prev.map(t => t.id === taskId ? (updatedTask as Task) : t));
+        return updatedTask as Task;
       }
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || 'Erreur lors de la mise à jour.');
+    } catch (error) {
+      console.error('Erreur mise à jour tâche:', error);
+      throw error;
     }
   }, []);
 
@@ -84,29 +58,25 @@ export function useTasks(projects: Project[], selectedProjectId: number | null) 
     try {
       await dashboardApi.deleteTask(projectId, taskId);
       setTasks(prev => prev.filter(t => t.id !== taskId));
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } catch (error) {
+      console.error('Erreur suppression tâche:', error);
+      throw error;
     }
   }, []);
 
-  // ✅ CORRECTION Infinite Loop : dépendance stable
   useEffect(() => {
     if (selectedProjectId) {
       fetchTasks();
-    } else {
-      fetchAllTasks();
     }
-  }, [selectedProjectId, fetchTasks, fetchAllTasks]);
+  }, [selectedProjectId, fetchTasks]);
 
-  return { 
-    tasks, 
-    isLoading, 
-    error, 
+  return {
+    tasks,
+    isLoading,
     fetchTasks,
-    fetchAllTasks,
-    addTask, 
+    addTask,
     updateTaskStatus,
     removeTask,
-    setTasks 
+    setTasks
   };
 }
