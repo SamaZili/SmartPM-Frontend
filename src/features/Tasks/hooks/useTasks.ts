@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { dashboardApi } from '../../Dashboard/api/dashboardApi';
 import { Task, CreateTaskDto, UpdateTaskStatusDto } from '../../../types';
 
-// ✅ Suppression du paramètre 'projects' inutilisé qui causait un warning TypeScript
 export function useTasks(selectedProjectId: number | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -12,11 +11,9 @@ export function useTasks(selectedProjectId: number | null) {
       setTasks([]);
       return;
     }
-    
     setIsLoading(true);
     try {
       const response = await dashboardApi.getTasks(selectedProjectId);
-      // ✅ Extraire les données de la réponse API (ApiResponse<Task[]>)
       const tasksData = response?.data || response;
       if (tasksData) {
         setTasks(Array.isArray(tasksData) ? tasksData : []);
@@ -31,7 +28,6 @@ export function useTasks(selectedProjectId: number | null) {
   const addTask = useCallback(async (projectId: number, data: CreateTaskDto) => {
     try {
       const response = await dashboardApi.createTask(projectId, data);
-      // ✅ Extraire la tâche de la réponse API
       const newTask = response?.data || response;
       if (newTask) {
         setTasks(prev => [...prev, newTask as Task]);
@@ -46,7 +42,6 @@ export function useTasks(selectedProjectId: number | null) {
   const updateTaskStatus = useCallback(async (projectId: number, taskId: number, data: UpdateTaskStatusDto) => {
     try {
       const response = await dashboardApi.updateTaskStatus(projectId, taskId, data);
-      // ✅ Extraire la tâche mise à jour
       const updatedTask = response?.data || response;
       if (updatedTask) {
         setTasks(prev => prev.map(t => t.id === taskId ? (updatedTask as Task) : t));
