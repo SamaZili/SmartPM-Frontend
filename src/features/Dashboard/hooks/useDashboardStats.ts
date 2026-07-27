@@ -12,8 +12,13 @@ export function useDashboardStats(projects: Project[], tasks: Task[], estimation
       : 0;
 
     const avgEstimation = estimations.length > 0
-      ? Number((estimations.reduce((sum, e) => sum + e.predicted_effort, 0) / estimations.length).toFixed(1))
-      : 0;
+  ? Math.round(
+      estimations.reduce((acc, curr) => {
+        const effort = parseFloat(String(curr.predicted_effort || 0));
+        return acc + (isNaN(effort) ? 0 : effort);
+      }, 0) / estimations.length
+    )
+  : 0;
 
     const statusDistribution = {
       a_faire: tasks.filter(t => t.status === 'a_faire').length,
