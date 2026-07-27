@@ -11,10 +11,8 @@ export function useProjects() {
     setIsLoading(true);
     try {
       const response = await dashboardApi.getProjects();
-      // Extraire les données de la réponse API
-      const projectsData = response.data || response;
-      if (projectsData) {
-        setProjects(Array.isArray(projectsData) ? projectsData : []);
+      if (response) {
+        setProjects(Array.isArray(response) ? response : []);
       }
     } catch (error) {
       console.error('Erreur chargement projets:', error);
@@ -23,17 +21,38 @@ export function useProjects() {
     }
   }, []);
 
-  const createProject = useCallback(async (data: CreateProjectDto) => {
+  const addProject = useCallback(async (data: CreateProjectDto) => {
     try {
       const response = await dashboardApi.createProject(data);
-      // Extraire le projet de la réponse
-      const newProject = response.data || response;
-      if (newProject) {
-        setProjects(prev => [...prev, newProject as Project]);
-        return newProject as Project;
+      if (response) {
+        setProjects(prev => [...prev, response]);
+        return response;
       }
     } catch (error) {
       console.error('Erreur création projet:', error);
+      throw error;
+    }
+  }, []);
+
+  const updateProject = useCallback(async (id: number, data: Partial<CreateProjectDto>) => {
+    try {
+      const response = await dashboardApi.updateProject(id, data);
+      if (response) {
+        setProjects(prev => prev.map(p => p.id === id ? response : p));
+        return response;
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour projet:', error);
+      throw error;
+    }
+  }, []);
+
+  const removeProject = useCallback(async (id: number) => {
+    try {
+      await dashboardApi.deleteProject(id);
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Erreur suppression projet:', error);
       throw error;
     }
   }, []);
@@ -42,5 +61,14 @@ export function useProjects() {
     fetchProjects();
   }, [fetchProjects]);
 
-  return { projects, selectedProject, setSelectedProject, isLoading, createProject };
+  return { 
+    projects, 
+    selectedProject, 
+    setSelectedProject, 
+    isLoading, 
+    addProject,       // ✅ Ajouté
+    updateProject,    // ✅ Ajouté
+    removeProject,    // ✅ Ajouté
+    fetchProjects 
+  };
 }
