@@ -1,87 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { profileApi } from '../../features/Profile/api/profileApi';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { UpdateProfileDto } from '../../types';
+import { User } from '../../types';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { message, showMessage } = useTemporaryMessage();
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    current_password: '',
-    new_password: '',
-    new_password_confirmation: ''
   });
 
-  // Initialiser le formulaire avec les données de l'utilisateur
+  // Charger les données utilisateur depuis localStorage
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        current_password: '',
-        new_password: '',
-        new_password_confirmation: ''
-      });
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    
+    // Si pas de token, rediriger vers login
+    if (!token) {
+      navigate('/login');
+      return;
     }
-  }, [user]);
+    
+    // Charger depuis localStorage
+    if (storedUser) {
+      try {
+        const userData: User = JSON.parse(storedUser);
+        setUser(userData);
+        setFormData({
+          name: userData.name || '',
+          email: userData.email || '',
+        });
+      } catch (err) {
+        console.error('Erreur lecture user:', err);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        navigate('/login');
+        return;
+      }
+    }
+    
+    setIsLoading(false);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const updateData: UpdateProfileDto = {
-        name: formData.name,
-        email: formData.email
-      };
-
-      // Si l'utilisateur veut changer son mot de passe
-      if (formData.new_password || formData.new_password_confirmation) {
-        if (formData.new_password !== formData.new_password_confirmation) {
-          showMessage('Les mots de passe ne correspondent pas', 3000, 'error');
-          setIsLoading(false);
-          return;
-        }
-        updateData.current_password = formData.current_password;
-        updateData.new_password = formData.new_password;
-        updateData.new_password_confirmation = formData.new_password_confirmation;
-      }
-
-      await profileApi.updateProfile(updateData);
-      showMessage('Profil mis à jour avec succès !');
-      
-      // Réinitialiser les champs de mot de passe
-      setFormData(prev => ({
-        ...prev,
-        current_password: '',
-        new_password: '',
-        new_password_confirmation: ''
-      }));
-    } catch (err: any) {
-      showMessage(err.response?.data?.message || 'Erreur lors de la mise à jour', 5000, 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Mettre à jour localement
+    const updatedUser: User = {
+      ...user!,
+      name: formData.name,
+      email: formData.email,
+      updated_at: new Date().toISOString(),
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    showMessage('Profil mis à jour avec succès !');
   };
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
-  if (!user) {
+  // Afficher un loader pendant le chargement
+  if (isLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loading}>Chargement...</div>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Chargement du profil...</p>
+        </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   const initial = user.name ? user.name.charAt(0).toUpperCase() : '?';
@@ -97,9 +97,9 @@ const ProfilePage: React.FC = () => {
         
         <nav className={styles.navMenu}>
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}> Projets</button>
           <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}> Profil</button>
+          <button className={`${styles.navButton} ${styles.navButtonActive}`}>👤 Profil</button>
         </nav>
 
         <div className={styles.userInfo}>
@@ -115,7 +115,11 @@ const ProfilePage: React.FC = () => {
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>Mon Profil</h1>
 
-        {message && <div className={styles.alert}>{message}</div>}
+        {message && (
+          <div className={styles.alert}>
+            {message}
+          </div>
+        )}
 
         <div className={styles.profileCard}>
           <div className={styles.profileHeader}>
@@ -137,7 +141,6 @@ const ProfilePage: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
-                  disabled={isLoading}
                 />
               </div>
               
@@ -148,52 +151,12 @@ const ProfilePage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
-                  disabled={isLoading}
                 />
               </div>
             </div>
 
-            <div className={styles.formSection}>
-              <h3>Changer le mot de passe</h3>
-              <p className={styles.hint}>Laissez vide pour conserver votre mot de passe actuel</p>
-              
-              <div className={styles.formGroup}>
-                <label>Mot de passe actuel</label>
-                <input
-                  type="password"
-                  value={formData.current_password}
-                  onChange={(e) => setFormData({...formData, current_password: e.target.value})}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Nouveau mot de passe</label>
-                <input
-                  type="password"
-                  value={formData.new_password}
-                  onChange={(e) => setFormData({...formData, new_password: e.target.value})}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Confirmation du nouveau mot de passe</label>
-                <input
-                  type="password"
-                  value={formData.new_password_confirmation}
-                  onChange={(e) => setFormData({...formData, new_password_confirmation: e.target.value})}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              className={styles.primaryBtn}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Mise à jour...' : 'Mettre à jour le profil'}
+            <button type="submit" className={styles.primaryBtn}>
+              Mettre à jour le profil
             </button>
           </form>
         </div>
