@@ -11,8 +11,10 @@ export function useProjects() {
     setIsLoading(true);
     try {
       const response = await dashboardApi.getProjects();
-      if (response) {
-        setProjects(Array.isArray(response) ? response : []);
+      // ✅ Extraire les données de la réponse API (ApiResponse<Project[]>)
+      const projectsData = response?.data || response;
+      if (projectsData) {
+        setProjects(Array.isArray(projectsData) ? projectsData : []);
       }
     } catch (error) {
       console.error('Erreur chargement projets:', error);
@@ -24,9 +26,11 @@ export function useProjects() {
   const addProject = useCallback(async (data: CreateProjectDto) => {
     try {
       const response = await dashboardApi.createProject(data);
-      if (response) {
-        setProjects(prev => [...prev, response]);
-        return response;
+      // ✅ Extraire le projet de la réponse API (ApiResponse<Project>)
+      const newProject = response?.data || response;
+      if (newProject) {
+        setProjects(prev => [...prev, newProject as Project]);
+        return newProject as Project;
       }
     } catch (error) {
       console.error('Erreur création projet:', error);
@@ -37,9 +41,10 @@ export function useProjects() {
   const updateProject = useCallback(async (id: number, data: Partial<CreateProjectDto>) => {
     try {
       const response = await dashboardApi.updateProject(id, data);
-      if (response) {
-        setProjects(prev => prev.map(p => p.id === id ? response : p));
-        return response;
+      const updatedProject = response?.data || response;
+      if (updatedProject) {
+        setProjects(prev => prev.map(p => p.id === id ? (updatedProject as Project) : p));
+        return updatedProject as Project;
       }
     } catch (error) {
       console.error('Erreur mise à jour projet:', error);
@@ -66,9 +71,9 @@ export function useProjects() {
     selectedProject, 
     setSelectedProject, 
     isLoading, 
-    addProject,       // ✅ Ajouté
-    updateProject,    // ✅ Ajouté
-    removeProject,    // ✅ Ajouté
+    addProject,       // ✅ Requis par ProjectsPage
+    updateProject,    // ✅ Requis par ProjectsPage
+    removeProject,    // ✅ Requis par ProjectsPage
     fetchProjects 
   };
 }
