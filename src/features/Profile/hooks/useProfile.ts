@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { profileApi, UpdateProfileDto } from '../api/profileApi';
-import { User } from '../../../types';
+import { profileApi } from '../api/profileApi';
+import { User, UpdateProfileDto } from '../../../types';
 
 export function useProfile() {
   const [user, setUser] = useState<User | null>(null);
