@@ -1,58 +1,91 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useProjects } from '../../features/Projects/hooks/useProjects';
-import { useTasks } from '../../features/Tasks/hooks/useTasks';
-import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
-import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+// ✅ APRÈS (correct - remonte au bon niveau)
 import { Project, Task, Estimation } from '../../types';
-import styles from './DashboardPage.module.css';
+import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
+import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 
-const DashboardPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { projects } = useProjects();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-// ✅ On ne passe QUE l'ID du projet sélectionné
-  const { tasks } = useTasks(selectedProject?.id || null);  
+export const useEstimations = (selectedProjectId: number | null, tasks: Task[]) => {
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
+  const { showMessage } = useTemporaryMessage();
 
-  // ✅ 1. LIRE LE LOCALSTORAGE AU CHARGEMENT
+  // ✅ 1. Charger depuis localStorage au démarrage
   useEffect(() => {
-    console.log('🔍 [DASHBOARD] Tentative de lecture du localStorage...');
+    console.log('🔍 useEstimations: Chargement depuis localStorage...');
     const stored = localStorage.getItem('smartpm_estimations');
-    console.log('🔍 [DASHBOARD] Valeur brute trouvée:', stored);
-    
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           setEstimations(parsed);
-          console.log('✅ [DASHBOARD] Estimations chargées avec succès. Nombre:', parsed.length);
-        } else {
-          console.error('❌ [DASHBOARD] La valeur n\'est pas un tableau:', parsed);
+          console.log('✅ useEstimations: Estimations chargées:', parsed.length);
         }
       } catch (e) {
-        console.error('❌ [DASHBOARD] Erreur lors du parsing JSON:', e);
+        console.error(' useEstimations: Erreur parsing:', e);
       }
-    } else {
-      console.warn('⚠️ [DASHBOARD] Aucune donnée "smartpm_estimations" dans le localStorage.');
     }
   }, []);
 
-  // ✅ 2. SAUVEGARDER DANS LE LOCALSTORAGE À CHAQUE MODIFICATION
+  // ✅ 2. Sauvegarder dans localStorage à chaque modification
   useEffect(() => {
-    console.log('💾 [DASHBOARD] Sauvegarde dans le localStorage. Nombre d\'estimations:', estimations.length);
+    console.log('💾 useEstimations: Sauvegarde de', estimations.length, 'estimations');
     localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
   }, [estimations]);
 
-  // ✅ 3. CALCUL DES STATS ET INSIGHTS
-  const stats = useDashboardStats(projects, tasks, estimations);
+  // ✅ 3. Fonction d'estimation (API + fallback local)
+  const handleEstimate = useCallback(async (taskId: number) => {
+    if (!selectedProjectId) return;
+    setIsLoading(true);
+    try {
+      const response = await dashboardApi.estimateTask(selectedProjectId, taskId);
+      console.log('🔍 useEstimations: Réponse API:', response);
+      
+      const estimationData: Estimation | undefined =
+        response.data ||
+        (response as any).estimation ||
+        (response as any).data?.estimation;
 
+      if (estimationData) {
+        setEstimations(prev => {
+          const exists = prev.some(e => e.task_id === taskId);
+          if (exists) {
+            showMessage('Déjà estimée !', 3000, 'error');
+            return prev;
+          }
+          const updated = [...prev, estimationData];
+          console.log('✅ useEstimations: Nouvelle estimation ajoutée:', updated);
+          return updated;
+        });
+        showMessage('Estimation générée !');
+      }
+    } catch (err) {
+      console.warn('⚠️ useEstimations: API indisponible, mode local');
+      const now = new Date().toISOString();
+      const fakeEstimation: Estimation = {
+        id: Date.now(),
+        task_id: taskId,
+        predicted_effort: Math.floor(Math.random() * 8) + 2,
+        confidence_score: 0.75 + Math.random() * 0.20,
+        created_at: now,
+        updated_at: now,
+      };
+      setEstimations(prev => {
+        const exists = prev.some(e => e.task_id === taskId);
+        if (exists) {
+          showMessage('Déjà estimée !', 3000, 'error');
+          return prev;
+        }
+        const updated = [...prev, fakeEstimation];
+        console.log('✅ useEstimations: Estimation locale ajoutée:', updated);
+        return updated;
+      });
+      showMessage('Estimation (mode local) !');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedProjectId, showMessage]);
+
+  // ✅ 4. Calcul des Insights IA
   const aiInsights = useMemo(() => {
     const totalEstimations = estimations.length;
     const avgConfidence = totalEstimations > 0
@@ -61,158 +94,11 @@ const DashboardPage: React.FC = () => {
     const tasksWithoutEstimation = tasks.filter((task: Task) =>
       !estimations.some(est => est.task_id === task.id)
     ).length;
-    
-    console.log('📊 [DASHBOARD] Calcul des Insights:', { totalEstimations, avgConfidence, tasksWithoutEstimation });
-    
+
+    console.log('📊 useEstimations: Insights calculés:', { totalEstimations, avgConfidence, tasksWithoutEstimation });
+
     return { totalEstimations, avgConfidence, tasksWithoutEstimation };
   }, [estimations, tasks]);
 
-  // ✅ 4. FONCTION D'ESTIMATION (DEPUIS LE DASHBOARD)
-  const handleEstimate = async (taskId: number) => {
-    if (!selectedProject) return;
-    setIsLoading(true);
-    try {
-      const response = await dashboardApi.estimateTask(selectedProject.id, taskId);
-      const estimationData: Estimation | undefined = response.data || (response as any).estimation || (response as any).data?.estimation;
-
-      if (estimationData) {
-        setEstimations(prev => {
-          const exists = prev.some(e => e.task_id === taskId);
-          if (exists) { showMessage('Déjà estimée !', 3000, 'error'); return prev; }
-          const updated = [...prev, estimationData];
-          console.log('✅ [DASHBOARD] Nouvelle estimation ajoutée au state:', updated);
-          return updated;
-        });
-        showMessage('Estimation générée !');
-      }
-    } catch (err) {
-      const now = new Date().toISOString();
-      const fakeEstimation: Estimation = { id: Date.now(), task_id: taskId, predicted_effort: Math.floor(Math.random() * 8) + 2, confidence_score: 0.75 + Math.random() * 0.20, created_at: now, updated_at: now };
-      setEstimations(prev => {
-        const exists = prev.some(e => e.task_id === taskId);
-        if (exists) { showMessage('Déjà estimée !', 3000, 'error'); return prev; }
-        const updated = [...prev, fakeEstimation];
-        console.log('✅ [DASHBOARD] Estimation locale ajoutée au state:', updated);
-        return updated;
-      });
-      showMessage('Estimation (mode local) !');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); };
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-  const userName = user?.name || 'Utilisateur';
-  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
-
-  const chartData = [
-    { name: 'À faire', value: stats.statusDistribution?.a_faire || 0, color: '#94a3b8' },
-    { name: 'En cours', value: stats.statusDistribution?.en_cours || 0, color: '#f59e0b' },
-    { name: 'Terminée', value: stats.statusDistribution?.terminee || 0, color: '#10b981' },
-  ];
-  const recentProjects = projects.slice(0, 3);
-
-  return (
-    <div className={styles.pageContainer}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logoContainer}>
-          <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
-          <h1 className={styles.logoText}>SmartPM</h1>
-        </div>
-        <nav className={styles.navMenu}>
-          <button className={`${styles.navButton} ${styles.navButtonActive}`}>📊 Tableau de bord</button>
-          <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
-          <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
-          <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
-        </nav>
-        <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>{userInitial}</div>
-          <div className={styles.userDetails}>
-            <p className={styles.userName}>{userName}</p>
-            <p className={styles.userRole}>{userRole}</p>
-          </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>Déconnexion</button>
-        </div>
-      </aside>
-
-      <main className={styles.mainContent}>
-        <h2 className={styles.pageTitle}>Vue d'ensemble analytique</h2>
-        {successMsg && <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>{successMsg}</div>}
-
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}><p className={styles.statLabel}>Projets actifs</p><p className={styles.statValue}>{stats.activeProjects}</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Tâches en cours</p><p className={styles.statValue}>{stats.tasksInProgress}</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Taux de complétion</p><p className={styles.statValue}>{stats.completionRate}%</p></div>
-          <div className={styles.statCard}><p className={styles.statLabel}>Estimation IA moyenne</p><p className={styles.statValuePrimary}>{stats.avgEstimation}h</p></div>
-        </div>
-
-        <div className={styles.aiInsightCard}>
-          <div className={styles.aiInsightHeader}>
-            <span className={styles.aiIcon}>🤖</span>
-            <h3>Insights de l'Intelligence Artificielle</h3>
-          </div>
-          <div className={styles.aiInsightMetrics}>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.totalEstimations}</span><span className={styles.aiMetricLabel}>Estimations réalisées</span></div>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.avgConfidence}%</span><span className={styles.aiMetricLabel}>Confiance moyenne</span></div>
-            <div className={styles.aiMetric}><span className={styles.aiMetricValue}>{aiInsights.tasksWithoutEstimation}</span><span className={styles.aiMetricLabel}>Tâches en attente</span></div>
-          </div>
-        </div>
-
-        <div className={styles.dashboardSplit}>
-          <div className={styles.chartSection}>
-            <h3 className={styles.chartTitle}>📊 Distribution des tâches</h3>
-            <div className={styles.chartContainer}>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={4} dataKey="value">
-                    {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className={styles.recentProjectsSection}>
-            <div className={styles.recentProjectsHeader}>
-              <h3>📁 Projets Récents</h3>
-              <button onClick={() => navigate('/projects')} className={styles.viewAllBtn}>Voir tous →</button>
-            </div>
-            <div className={styles.recentProjectsList}>
-              {recentProjects.length > 0 ? recentProjects.map((project) => (
-                <div key={project.id} className={styles.recentProjectItem} onClick={() => setSelectedProject(project)}>
-                  <div className={styles.recentProjectIcon}>{project.name?.charAt(0)?.toUpperCase()}</div>
-                  <div className={styles.recentProjectInfo}><h4>{project.name}</h4><span>{project.status}</span></div>
-                </div>
-              )) : <p>Aucun projet</p>}
-            </div>
-          </div>
-        </div>
-
-        {selectedProject && (
-          <div className={styles.tasksSection}>
-            <h3>Tâches : {selectedProject.name}</h3>
-            <div className={styles.taskList}>
-              {tasks.map((task: Task) => {
-                const hasEst = estimations.some(e => e.task_id === task.id);
-                return (
-                  <div key={task.id} className={styles.taskItem}>
-                    <div><h4>{task.name}</h4><p>{task.description || 'Aucune description'}</p></div>
-                    <button onClick={() => handleEstimate(task.id)} disabled={hasEst || isLoading} className={styles.estimateButton} style={hasEst ? { opacity: 0.5 } : {}}>
-                      {hasEst ? '✅ Fait' : isLoading ? '⏳...' : '🤖 Estimer'}
-                    </button>
-                  </div>
-                );
-              })}
-              {tasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet.</div>}
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+  return { estimations, isLoading, handleEstimate, aiInsights };
 };
-
-export default DashboardPage;
