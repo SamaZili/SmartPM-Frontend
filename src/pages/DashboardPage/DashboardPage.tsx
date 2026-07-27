@@ -15,8 +15,7 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks } = useTasks(projects, selectedProject?.id || null);
-
+  const { tasks } = useTasks(selectedProject?.id || null);
   // ✅ TOUTE la logique complexe est maintenant dans ce hook !
   const { estimations, isLoading, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, tasks);
   const stats = useDashboardStats(projects, tasks, estimations);

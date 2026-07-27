@@ -13,8 +13,7 @@ const TasksPage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
   // ✅ 1. DÉSTRUCTURER removeTask ICI
-  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(projects, selectedProject?.id || null);
-  
+  const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
   const [estimations, setEstimations] = useState<Estimation[]>([]);
   const [loadingEstimates, setLoadingEstimates] = useState<Set<number>>(new Set());
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
