@@ -13,9 +13,7 @@ const TasksPage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
   
-  // ✅ CORRECTION 1 & 2 : Déstructuration d'objet (pas de tableau) et seulement 2 arguments
-  const { estimations, isLoading: isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
-  
+  const { estimations, isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
   const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState({ name: '', description: '' });
@@ -107,7 +105,7 @@ const TasksPage: React.FC = () => {
         </div>
         <nav className={styles.navMenu}>
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}> Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
@@ -180,11 +178,9 @@ const TasksPage: React.FC = () => {
                 return (
                   <div key={task.id} className={styles.taskCard}>
                     {editingTask?.id === task.id ? (
-                      // MODE ÉDITION
                       <div className={styles.editMode}>
                         <div className={styles.formGroup}>
                           <label>Nom de la tâche</label>
-                          {/* ✅ CORRECTION 3 : Ajout du type React.ChangeEvent */}
                           <input
                             type="text"
                             value={editForm.name}
@@ -195,7 +191,6 @@ const TasksPage: React.FC = () => {
                         </div>
                         <div className={styles.formGroup}>
                           <label>Description</label>
-                          {/* ✅ CORRECTION 3 : Ajout du type React.ChangeEvent */}
                           <textarea
                             value={editForm.description}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({...editForm, description: e.target.value})}
@@ -213,7 +208,6 @@ const TasksPage: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      // MODE AFFICHAGE NORMAL
                       <>
                         <div className={styles.taskHeader}>
                           <h4>{task.name}</h4>
@@ -254,7 +248,7 @@ const TasksPage: React.FC = () => {
                         {estimation && (
                           <div className={styles.estimationResult}>
                             <div className={styles.estimationHeader}>
-                              <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
+                              <span className={styles.estimationTitle}> Résultat de l'estimation</span>
                               <span className={styles.estimationDate}>
                                 {new Date(estimation.created_at).toLocaleDateString('fr-FR')}
                               </span>

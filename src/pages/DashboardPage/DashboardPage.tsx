@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import { useProjects } from '../../features/Projects/hooks/useProjects';
 import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useDashboardStats } from '../../features/Dashboard/hooks/useDashboardStats';
+import { useEstimations } from '../../features/Dashboard/hooks/useEstimations';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
@@ -16,137 +17,11 @@ const DashboardPage: React.FC = () => {
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
-  // Charger les tâches du projet sélectionné
-  const { tasks: selectedProjectTasks } = useTasks(selectedProject?.id || null);
+  const { tasks, fetchTasks } = useTasks(selectedProject?.id || null);
+  const { estimations, isLoading, isEstimating, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, tasks);
   
-  // Charger TOUTES les tâches de TOUS les projets pour les stats globales
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
-  
-  const [estimations, setEstimations] = useState<Estimation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const stats = useDashboardStats(projects, tasks, estimations);
   const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
-
-  // 1. Charger les estimations depuis localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('smartpm_estimations');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setEstimations(parsed);
-        }
-      } catch (e) {
-        console.error(' Dashboard: Erreur parsing estimations:', e);
-      }
-    }
-  }, []);
-
-  // 2. Sauvegarder dans localStorage
-  useEffect(() => {
-    localStorage.setItem('smartpm_estimations', JSON.stringify(estimations));
-  }, [estimations]);
-
-  // 3. Charger TOUTES les tâches de TOUS les projets au démarrage
-  useEffect(() => {
-    const loadAllTasks = async () => {
-      if (projects.length === 0) return;
-      
-      try {
-        const allTasksPromises = projects.map(project => 
-          dashboardApi.getTasks(project.id)
-        );
-        const responses = await Promise.all(allTasksPromises);
-        
-        const tasks = responses.flatMap(response => {
-          const tasksData = response?.data || response;
-          return Array.isArray(tasksData) ? tasksData : [];
-        });
-        
-        setAllTasks(tasks);
-      } catch (error) {
-        console.error('❌ Dashboard: Erreur chargement tâches:', error);
-      }
-    };
-
-    loadAllTasks();
-  }, [projects]);
-
-  // 4. Calculer les stats avec TOUTES les tâches
-  const stats = useDashboardStats(projects, allTasks, estimations);
-
-  // 5. Calculer les Insights IA
-  const aiInsights = useMemo(() => {
-    const totalEstimations = estimations.length;
-    const avgConfidence = totalEstimations > 0
-      ? Math.round(estimations.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / totalEstimations * 100)
-      : 0;
-    const tasksWithoutEstimation = allTasks.filter((task: Task) =>
-      !estimations.some(est => est.task_id === task.id)
-    ).length;
-    
-    return { totalEstimations, avgConfidence, tasksWithoutEstimation };
-  }, [estimations, allTasks]);
-
-  // 6. Données pour le PieChart (avec TOUTES les tâches)
-  const chartData = useMemo(() => {
-    const statusCounts = {
-      a_faire: allTasks.filter(t => t.status === 'a_faire').length,
-      en_cours: allTasks.filter(t => t.status === 'en_cours').length,
-      terminee: allTasks.filter(t => t.status === 'terminee').length,
-    };
-
-    return [
-      { name: 'À faire', value: statusCounts.a_faire, color: '#94a3b8' },
-      { name: 'En cours', value: statusCounts.en_cours, color: '#f59e0b' },
-      { name: 'Terminée', value: statusCounts.terminee, color: '#10b981' },
-    ];
-  }, [allTasks]);
-
-  // 7. Fonction d'estimation (depuis le Dashboard)
-  const handleEstimate = async (taskId: number) => {
-    if (!selectedProject) return;
-    setIsLoading(true);
-    try {
-      const response = await dashboardApi.estimateTask(selectedProject.id, taskId);
-      const estimationData: Estimation | undefined =
-        response.data ||
-        (response as any).estimation ||
-        (response as any).data?.estimation;
-
-      if (estimationData) {
-        setEstimations(prev => {
-          const exists = prev.some(e => e.task_id === taskId);
-          if (exists) {
-            showMessage('Déjà estimée !', 3000, 'error');
-            return prev;
-          }
-          return [...prev, estimationData];
-        });
-        showMessage('Estimation générée !');
-      }
-    } catch (err) {
-      const now = new Date().toISOString();
-      const fakeEstimation: Estimation = {
-        id: Date.now(),
-        task_id: taskId,
-        predicted_effort: Math.floor(Math.random() * 8) + 2,
-        confidence_score: 0.75 + Math.random() * 0.20,
-        created_at: now,
-        updated_at: now,
-      };
-      setEstimations(prev => {
-        const exists = prev.some(e => e.task_id === taskId);
-        if (exists) {
-          showMessage('Déjà estimée !', 3000, 'error');
-          return prev;
-        }
-        return [...prev, fakeEstimation];
-      });
-      showMessage('Estimation (mode local) !');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -157,6 +32,20 @@ const DashboardPage: React.FC = () => {
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
   const userName = user?.name || 'Utilisateur';
   const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
+
+  const chartData = useMemo(() => {
+    const statusCounts = {
+      a_faire: tasks.filter(t => t.status === 'a_faire').length,
+      en_cours: tasks.filter(t => t.status === 'en_cours').length,
+      terminee: tasks.filter(t => t.status === 'terminee').length,
+    };
+
+    return [
+      { name: 'À faire', value: statusCounts.a_faire, color: '#94a3b8' },
+      { name: 'En cours', value: statusCounts.en_cours, color: '#f59e0b' },
+      { name: 'Terminée', value: statusCounts.terminee, color: '#10b981' },
+    ];
+  }, [tasks]);
 
   const recentProjects = projects.slice(0, 3);
 
@@ -187,30 +76,16 @@ const DashboardPage: React.FC = () => {
         <h2 className={styles.pageTitle}>Vue d'ensemble analytique</h2>
         {successMsg && <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>{successMsg}</div>}
 
-        {/* STATS GLOBALES */}
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Projets actifs</p>
-            <p className={styles.statValue}>{stats.activeProjects}</p>
-          </div>
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Tâches en cours</p>
-            <p className={styles.statValue}>{stats.tasksInProgress}</p>
-          </div>
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Taux de complétion</p>
-            <p className={styles.statValue}>{stats.completionRate}%</p>
-          </div>
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Estimation IA moyenne</p>
-            <p className={styles.statValuePrimary}>{stats.avgEstimation}h</p>
-          </div>
+          <div className={styles.statCard}><p className={styles.statLabel}>Projets actifs</p><p className={styles.statValue}>{stats.activeProjects}</p></div>
+          <div className={styles.statCard}><p className={styles.statLabel}>Tâches en cours</p><p className={styles.statValue}>{stats.tasksInProgress}</p></div>
+          <div className={styles.statCard}><p className={styles.statLabel}>Taux de complétion</p><p className={styles.statValue}>{stats.completionRate}%</p></div>
+          <div className={styles.statCard}><p className={styles.statLabel}>Estimation IA moyenne</p><p className={styles.statValuePrimary}>{stats.avgEstimation}h</p></div>
         </div>
 
-        {/* INSIGHTS IA */}
         <div className={styles.aiInsightCard}>
           <div className={styles.aiInsightHeader}>
-            <span className={styles.aiIcon}></span>
+            <span className={styles.aiIcon}>🤖</span>
             <h3>Insights de l'Intelligence Artificielle</h3>
           </div>
           <div className={styles.aiInsightMetrics}>
@@ -229,12 +104,11 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* GRAPHIQUE + PROJETS RÉCENTS */}
         <div className={styles.dashboardSplit}>
           <div className={styles.chartSection}>
             <h3 className={styles.chartTitle}>📊 Distribution des tâches</h3>
             <div className={styles.chartContainer}>
-              {allTasks.length > 0 ? (
+              {tasks.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
@@ -265,7 +139,7 @@ const DashboardPage: React.FC = () => {
 
           <div className={styles.recentProjectsSection}>
             <div className={styles.recentProjectsHeader}>
-              <h3>📁 Projets Récents</h3>
+              <h3> Projets Récents</h3>
               <button onClick={() => navigate('/projects')} className={styles.viewAllBtn}>Voir tous →</button>
             </div>
             <div className={styles.recentProjectsList}>
@@ -282,12 +156,11 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* TÂCHES DU PROJET SÉLECTIONNÉ */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3>Tâches : {selectedProject.name}</h3>
             <div className={styles.taskList}>
-              {selectedProjectTasks.map((task: Task) => {
+              {tasks.map((task: Task) => {
                 const hasEst = estimations.some(e => e.task_id === task.id);
                 return (
                   <div key={task.id} className={styles.taskItem}>
@@ -297,16 +170,16 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <button
                       onClick={() => handleEstimate(task.id)}
-                      disabled={hasEst || isLoading}
+                      disabled={hasEst || isEstimating}
                       className={styles.estimateButton}
                       style={hasEst ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
-                      {hasEst ? '✅ Fait' : isLoading ? '⏳...' : ' Estimer'}
+                      {hasEst ? '✅ Fait' : isEstimating ? '...' : '🤖 Estimer'}
                     </button>
                   </div>
                 );
               })}
-              {selectedProjectTasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet.</div>}
+              {tasks.length === 0 && <div className={styles.taskEmpty}>Aucune tâche pour ce projet.</div>}
             </div>
           </div>
         )}
