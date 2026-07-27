@@ -16,5 +16,4 @@ export const dashboardApi = {
   
   // Estimations IA
   estimateTask: (projectId: number, taskId: number) => post<Estimation>(`/projects/${projectId}/tasks/${taskId}/estimate`),
-  getEstimations: (projectId: number) => get<Estimation[]>(`/projects/${projectId}/estimations`),
 };
