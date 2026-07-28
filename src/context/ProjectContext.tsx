@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { projectsApi, CreateProjectDto } from '../features/Projects/api/projectsApi';
 import { Project } from '../types';
-import { ProjectContextType } from './ProjectContext.type'; // ✅ Import du type séparé
+import { ProjectContextType } from './ProjectContext.type';
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
@@ -14,7 +14,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsLoading(true);
     setError(null);
     try {
-      const response = await projectsApi.getProjects();
+      // ✅ NOM CORRECT : getAll
+      const response = await projectsApi.getAll();
       if (response.success && response.data) {
         setProjects(response.data);
       }
@@ -26,21 +27,24 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   const addProject = useCallback(async (data: CreateProjectDto) => {
-    const response = await projectsApi.createProject(data);
+    // ✅ NOM CORRECT : create
+    const response = await projectsApi.create(data);
     if (response.success && response.data) {
       setProjects(prev => [...prev, response.data as Project]);
     }
   }, []);
 
   const updateProject = useCallback(async (id: number, data: Partial<CreateProjectDto>) => {
-    const response = await projectsApi.updateProject(id, data);
+    // ✅ NOM CORRECT : update
+    const response = await projectsApi.update(id, data);
     if (response.success && response.data) {
       setProjects(prev => prev.map(p => p.id === id ? (response.data as Project) : p));
     }
   }, []);
 
   const removeProject = useCallback(async (id: number) => {
-    const response = await projectsApi.deleteProject(id);
+    // ✅ NOM CORRECT : delete
+    const response = await projectsApi.delete(id);
     if (response.success) {
       setProjects(prev => prev.filter(p => p.id !== id));
     }
