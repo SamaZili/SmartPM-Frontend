@@ -1,31 +1,18 @@
 import React from 'react';
 import Toast from '../Toast/Toast';
 import styles from './ToastContainer.module.css';
+import { ToastContainerProps } from './ToastContainer.type'; // ✅ Import des types séparés
 
-export interface ToastItem {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-  duration?: number;
-}
-
-interface ToastContainerProps {
-  toasts: ToastItem[];
-  onRemove: (id: string) => void;
-}
-
-const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
-  if (toasts.length === 0) return null;
-
+const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, removeToast }) => {
   return (
-    <div className={styles.container}>
+    <div className={styles.toastContainer}>
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
+          id={toast.id}
           message={toast.message}
           type={toast.type}
-          duration={toast.duration}
-          onClose={() => onRemove(toast.id)}
+          onClose={() => removeToast(toast.id)}
         />
       ))}
     </div>

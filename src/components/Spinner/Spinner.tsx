@@ -1,17 +1,14 @@
 import React from 'react';
 import styles from './Spinner.module.css';
+import { SpinnerProps } from './Spinner.type'; // ✅ Import du type séparé
 
-interface SpinnerProps {
-  size?: 'small' | 'medium' | 'large';
-  color?: string;
-}
-
-const Spinner: React.FC<SpinnerProps> = ({ size = 'medium', color = '#10b981' }) => {
+const Spinner: React.FC<SpinnerProps> = ({ size = 'medium', color, className }) => {
   return (
     <div 
-      className={`${styles.spinner} ${styles[size]}`} 
-      style={{ borderTopColor: color }}
-    />
+      className={`${styles.spinner} ${styles[size]} ${className || ''}`}
+      style={color ? { borderTopColor: color } : undefined}
+    >
+    </div>
   );
 };
 

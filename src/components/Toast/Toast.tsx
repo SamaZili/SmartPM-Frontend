@@ -1,43 +1,19 @@
 import React, { useEffect } from 'react';
 import styles from './Toast.module.css';
+import { ToastProps } from './Toast.type'; // ✅ Import du type séparé
 
-export interface ToastProps {
-  message: string;
-  type: 'success' | 'error' | 'info';
-  duration?: number;
-  onClose: () => void;
-}
-
-const Toast: React.FC<ToastProps> = ({ 
-  message, 
-  type, 
-  duration = 3000, 
-  onClose 
-}) => {
+const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, duration);
-
+    }, 3000);
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
-
-  const getIcon = () => {
-    switch (type) {
-      case 'success': return '✓';
-      case 'error': return '✕';
-      case 'info': return 'ℹ';
-      default: return 'ℹ';
-    }
-  };
+  }, [onClose]);
 
   return (
     <div className={`${styles.toast} ${styles[type]}`}>
-      <div className={styles.icon}>{getIcon()}</div>
-      <div className={styles.message}>{message}</div>
-      <button className={styles.closeBtn} onClick={onClose}>
-        ✕
-      </button>
+      <span className={styles.message}>{message}</span>
+      <button className={styles.closeBtn} onClick={onClose}>×</button>
     </div>
   );
 };
