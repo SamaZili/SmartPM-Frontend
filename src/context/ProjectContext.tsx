@@ -51,8 +51,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
     fetchProjects();
-  }, [fetchProjects]);
+  }
+}, [fetchProjects]);
 
   return (
     <ProjectContext.Provider value={{ projects, isLoading, error, fetchProjects, addProject, updateProject, removeProject }}>

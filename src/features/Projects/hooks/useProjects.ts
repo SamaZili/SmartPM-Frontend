@@ -63,8 +63,11 @@ export function useProjects() {
   }, []);
 
   useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
     fetchProjects();
-  }, [fetchProjects]);
+  }
+}, [fetchProjects]);
 
   return { 
     projects, 
