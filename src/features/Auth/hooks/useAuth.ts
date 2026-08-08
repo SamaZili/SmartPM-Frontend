@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { authApi, LoginDto, RegisterDto } from '../api/authApi';
+import { authApi } from '../api/authApi';
+import { LoginDto, RegisterDto } from '../../../types';
 import { User } from '../../../types';
 
 // Interface pour stocker les erreurs de validation

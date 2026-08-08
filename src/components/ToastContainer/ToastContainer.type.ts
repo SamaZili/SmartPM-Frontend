@@ -1,10 +1,11 @@
 export interface ToastItem {
-  id: string | number;
+  id: string;
   message: string;
-  type?: 'success' | 'error' | 'warning' | 'info';
+  type: 'success' | 'error' | 'info';
+  duration?: number;
 }
 
 export interface ToastContainerProps {
   toasts: ToastItem[];
-  removeToast: (id: string | number) => void;
+  removeToast: (id: string) => void;
 }

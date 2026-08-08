@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
-import { RegisterDto } from '../../features/Auth/api/authApi';
+import { RegisterDto } from '../../types';
 import styles from './RegisterPage.module.css';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();  
+  
   const [formData, setFormData] = useState<RegisterDto>({
     name: '',
     email: '',

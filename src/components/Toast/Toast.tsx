@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import styles from './Toast.module.css';
-import { ToastProps } from './Toast.type'; // ✅ Import du type séparé
+import { ToastProps } from './Toast.type';
 
-const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', onClose }) => {
+const Toast: React.FC<ToastProps> = ({ message, type = 'info', duration = 3000, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 3000);
+    }, duration);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [duration, onClose]);
 
   return (
     <div className={`${styles.toast} ${styles[type]}`}>

@@ -24,9 +24,10 @@ const DashboardPage: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   
   // Estimations (extraites de allTasks via le hook)
-// Estimations (extraites de selectedProjectTasks via le hook)
-// ✅ Utiliser allTasks pour les stats globales du Dashboard
-const { estimations, isEstimating, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, allTasks);  const { message: successMsg, type: msgType, showMessage } = useTemporaryMessage();
+  const { estimations, isEstimating, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, allTasks);
+  
+  // ✅ CORRECTION : suppression de showMessage (jamais utilisé)
+  const { message: successMsg, type: msgType } = useTemporaryMessage();
 
   // ✅ Charger les tâches de TOUS les projets au démarrage
   useEffect(() => {

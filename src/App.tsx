@@ -17,8 +17,7 @@ function App() {
 
   return (
     <ProjectProvider>
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-      
+    <ToastContainer toasts={toasts} removeToast={removeToast} />      
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
