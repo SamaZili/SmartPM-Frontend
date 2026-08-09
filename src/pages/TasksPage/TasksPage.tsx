@@ -142,6 +142,7 @@ const TasksPage: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
+          <button onClick={() => navigate('/my-tasks')} className={styles.navButton}>📥 Mes Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>

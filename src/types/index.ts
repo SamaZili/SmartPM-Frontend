@@ -28,7 +28,10 @@ export interface Estimation {
   predicted_effort: number;
   confidence_score: number;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+  project_id?: number;
+  task_name?: string;
+  task_description?: string;
 }
 
 // ✅ ASSIGNATION DES TÂCHES
@@ -49,9 +52,10 @@ export interface Task {
   status: 'a_faire' | 'en_cours' | 'terminee';
   complexity?: string;
   estimation?: Estimation | null;
-  assigned_to?: number | null;              // ✅ AJOUTÉ
-  assignedTo?: UserSimple | null;           // ✅ AJOUTÉ (relation Eloquent)
-  assignment_status?: AssignmentStatus | null; // ✅ AJOUTÉ
+  assigned_to?: number | null;
+  assignedTo?: UserSimple | null;
+  assignment_status?: AssignmentStatus | null;
+  project?: Project | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,13 +118,13 @@ export interface CreateTaskDto {
   description?: string;
   status?: string;
   complexity?: string;
-  assigned_to?: number | null; // ✅ AJOUTÉ
+  assigned_to?: number | null;
 }
 
 export interface UpdateTaskStatusDto {
   status: string;
-  assigned_to?: number | null;       // ✅ AJOUTÉ
-  assignment_status?: AssignmentStatus; // ✅ AJOUTÉ
+  assigned_to?: number | null;
+  assignment_status?: AssignmentStatus;
 }
 
 export interface ApiResponse<T> {

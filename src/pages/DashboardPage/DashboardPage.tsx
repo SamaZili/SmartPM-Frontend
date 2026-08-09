@@ -17,19 +17,12 @@ const DashboardPage: React.FC = () => {
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
-  // Tâches du projet sélectionné (pour la section "Tâches")
   const { tasks: selectedProjectTasks } = useTasks(selectedProject?.id || null);
-  
-  // ✅ TOUTES les tâches de TOUS les projets (pour les stats globales)
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   
-  // Estimations (extraites de allTasks via le hook)
   const { estimations, isEstimating, handleEstimate, aiInsights } = useEstimations(selectedProject?.id || null, allTasks);
-  
-  // ✅ CORRECTION : suppression de showMessage (jamais utilisé)
   const { message: successMsg, type: msgType } = useTemporaryMessage();
 
-  // ✅ Charger les tâches de TOUS les projets au démarrage
   useEffect(() => {
     const loadAllTasks = async () => {
       if (projects.length === 0) return;
@@ -54,10 +47,8 @@ const DashboardPage: React.FC = () => {
     loadAllTasks();
   }, [projects]);
 
-  // ✅ Calculer les stats avec TOUTES les tâches
   const stats = useDashboardStats(projects, allTasks, estimations);
 
-  // ✅ Données pour le PieChart
   const chartData = useMemo(() => {
     const statusCounts = {
       a_faire: allTasks.filter(t => t.status === 'a_faire').length,
@@ -95,6 +86,7 @@ const DashboardPage: React.FC = () => {
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>📊 Tableau de bord</button>
           <button className={styles.navButton} onClick={() => navigate('/projects')}>📁 Projets</button>
           <button className={styles.navButton} onClick={() => navigate('/tasks')}>✅ Tâches</button>
+          <button className={styles.navButton} onClick={() => navigate('/my-tasks')}>📥 Mes Tâches</button>
           <button className={styles.navButton} onClick={() => navigate('/profile')}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>
@@ -111,7 +103,6 @@ const DashboardPage: React.FC = () => {
         <h2 className={styles.pageTitle}>Vue d'ensemble analytique</h2>
         {successMsg && <div className={msgType === 'error' ? styles.errorMessage : styles.successMessage}>{successMsg}</div>}
 
-        {/* ✅ STATS GLOBALES */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Projets actifs</p>
@@ -131,7 +122,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ INSIGHTS IA */}
         <div className={styles.aiInsightCard}>
           <div className={styles.aiInsightHeader}>
             <span className={styles.aiIcon}>🤖</span>
@@ -153,7 +143,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ GRAPHIQUE + PROJETS RÉCENTS */}
         <div className={styles.dashboardSplit}>
           <div className={styles.chartSection}>
             <h3 className={styles.chartTitle}>📊 Distribution des tâches</h3>
@@ -189,7 +178,7 @@ const DashboardPage: React.FC = () => {
 
           <div className={styles.recentProjectsSection}>
             <div className={styles.recentProjectsHeader}>
-              <h3> Projets Récents</h3>
+              <h3>📁 Projets Récents</h3>
               <button onClick={() => navigate('/projects')} className={styles.viewAllBtn}>Voir tous →</button>
             </div>
             <div className={styles.recentProjectsList}>
@@ -206,7 +195,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ TÂCHES DU PROJET SÉLECTIONNÉ */}
         {selectedProject && (
           <div className={styles.tasksSection}>
             <h3>Tâches : {selectedProject.name}</h3>

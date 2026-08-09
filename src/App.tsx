@@ -11,13 +11,14 @@ import DashboardPage from './pages/DashboardPage/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import TasksPage from './pages/TasksPage/TasksPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
+import MyTasksPage from './pages/MyTasksPage/MyTasksPage';
 
 function App() {
   const { toasts, removeToast } = useToast();
 
   return (
     <ProjectProvider>
-    <ToastContainer toasts={toasts} removeToast={removeToast} />      
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -26,6 +27,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/my-tasks" element={<MyTasksPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

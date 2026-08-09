@@ -1,0 +1,44 @@
+.pageContainer { display: flex; min-height: 100vh; background-color: #f8fafc; }
+
+.sidebar { width: 260px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; display: flex; flex-direction: column; padding: 1.5rem 1rem; position: fixed; top: 0; left: 0; bottom: 0; }
+.logoContainer { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; padding: 0 0.5rem; }
+.logoIcon { width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logoLetter { font-size: 1.25rem; font-weight: 700; color: white; }
+.logoText { font-size: 1.25rem; font-weight: 700; color: white; margin: 0; }
+
+.navMenu { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.navButton { padding: 0.875rem 1rem; background: transparent; color: #94a3b8; border: none; border-radius: 8px; text-align: left; cursor: pointer; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; }
+.navButton:hover { background-color: rgba(255, 255, 255, 0.05); color: white; }
+.navButtonActive { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+
+.userInfo { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); flex-wrap: wrap; }
+.userAvatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.userDetails { flex: 1; }
+.userName { margin: 0; font-size: 0.875rem; font-weight: 600; }
+.userRole { margin: 0; font-size: 0.75rem; color: #94a3b8; }
+.logoutBtn { padding: 0.5rem 0.75rem; background: rgba(239, 68, 68, 0.15); color: #f87171; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
+.logoutBtn:hover { background: rgba(239, 68, 68, 0.3); }
+
+.mainContent { flex: 1; margin-left: 260px; padding: 2rem; }
+.pageTitle { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 1.5rem; }
+
+.successAlert { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+.errorAlert { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+
+.tasksList { display: flex; flex-direction: column; gap: 1rem; }
+.taskCard { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.taskHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.taskHeader h4 { margin: 0; color: #1e293b; font-size: 1rem; }
+.assignmentBadge { padding: 0.25rem 0.75rem; border-radius: 12px; color: white; font-size: 0.75rem; font-weight: 600; }
+.taskDesc { color: #64748b; font-size: 0.875rem; margin: 0 0 0.5rem 0; }
+.projectInfo { color: #3b82f6; font-size: 0.8125rem; font-weight: 600; margin: 0 0 1rem 0; }
+
+.taskActions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.acceptBtn, .startBtn, .completeBtn { padding: 0.625rem 1.25rem; border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
+.acceptBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.startBtn { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.completeBtn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.acceptBtn:hover, .startBtn:hover, .completeBtn:hover { transform: translateY(-1px); }
+.doneLabel { color: #10b981; font-weight: 700; }
+
+.emptyState { text-align: center; padding: 3rem 2rem; color: #64748b; background: white; border-radius: 12px; border: 2px dashed #e2e8f0; }
