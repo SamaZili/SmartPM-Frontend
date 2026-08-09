@@ -66,3 +66,18 @@ export interface ApiResponse<T> {
   data?: T;
   message?: string;
 }
+// ✅ ASSIGNATION
+export type AssignmentStatus = 'pending' | 'accepted' | 'in_progress' | 'completed';
+
+export interface UserSimple {
+  id: number;
+  name: string;
+  email: string;
+  type: 'chef_de_projet' | 'developer';
+}
+
+// Mise à jour de l'interface Task (ajoute ces 2 champs si pas déjà présents)
+// Dans ton interface Task existante, vérifie que tu as bien :
+//   assigned_to?: number | null;
+//   assignedTo?: UserSimple | null;
+//   assignment_status?: AssignmentStatus | null;
