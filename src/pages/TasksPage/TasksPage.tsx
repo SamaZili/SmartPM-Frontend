@@ -5,6 +5,7 @@ import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useEstimations } from '../../features/Dashboard/hooks/useEstimations';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Project, Task } from '../../types';
+import AssigneeSelect from '../../features/Tasks/components/AssigneeSelect';
 import styles from './TasksPage.module.css';
 
 const TasksPage: React.FC = () => {
@@ -14,9 +15,21 @@ const TasksPage: React.FC = () => {
   const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
   
   const { estimations, isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
-  const [newTask, setNewTask] = useState({ name: '', description: '', status: 'a_faire' });
+  
+  const [newTask, setNewTask] = useState({
+    name: '',
+    description: '',
+    status: 'a_faire',
+    assigned_to: null as number | null,
+  });
+  
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', description: '' });
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    assigned_to: null as number | null,
+  });
+  
   const { message, showMessage } = useTemporaryMessage();
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -31,8 +44,9 @@ const TasksPage: React.FC = () => {
         description: newTask.description || undefined,
         status: newTask.status,
         complexity: 'moyenne',
+        assigned_to: newTask.assigned_to,
       });
-      setNewTask({ name: '', description: '', status: 'a_faire' });
+      setNewTask({ name: '', description: '', status: 'a_faire', assigned_to: null });
       showMessage('Tâche ajoutée avec succès !');
     } catch (err: any) {
       showMessage(err.message || 'Erreur', 5000, 'error');
@@ -56,6 +70,7 @@ const TasksPage: React.FC = () => {
     setEditForm({
       name: task.name,
       description: task.description || '',
+      assigned_to: task.assigned_to || null,
     });
   };
 
@@ -82,7 +97,7 @@ const TasksPage: React.FC = () => {
 
   const handleEditCancel = () => {
     setEditingTask(null);
-    setEditForm({ name: '', description: '' });
+    setEditForm({ name: '', description: '', assigned_to: null });
   };
 
   const getEstimationForTask = (taskId: number) => estimations.find(e => e.task_id === taskId);
@@ -96,6 +111,26 @@ const TasksPage: React.FC = () => {
     return colors[status] || '#64748b';
   };
 
+  const getAssignmentStatusLabel = (status?: string | null) => {
+    const labels: Record<string, string> = {
+      pending: '⏳ En attente',
+      accepted: '✅ Acceptée',
+      in_progress: '🔄 En cours',
+      completed: '🎉 Terminée',
+    };
+    return status ? labels[status] || status : 'Non assignée';
+  };
+
+  const getAssignmentStatusColor = (status?: string | null) => {
+    const colors: Record<string, string> = {
+      pending: '#f59e0b',
+      accepted: '#3b82f6',
+      in_progress: '#8b5cf6',
+      completed: '#10b981',
+    };
+    return status ? colors[status] || '#64748b' : '#94a3b8';
+  };
+
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
@@ -105,7 +140,7 @@ const TasksPage: React.FC = () => {
         </div>
         <nav className={styles.navMenu}>
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navButton}> Projets</button>
+          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
@@ -168,6 +203,13 @@ const TasksPage: React.FC = () => {
                 <option value="en_cours">En cours</option>
                 <option value="terminee">Terminée</option>
               </select>
+              
+              <AssigneeSelect
+                value={newTask.assigned_to}
+                onChange={(userId: number | null) => setNewTask({...newTask, assigned_to: userId})}
+                className={styles.assigneeSelect}
+              />
+              
               <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
@@ -198,6 +240,16 @@ const TasksPage: React.FC = () => {
                             rows={2}
                           />
                         </div>
+                        
+                        <div className={styles.formGroup}>
+                          <label>Assigné à</label>
+                          <AssigneeSelect
+                            value={editForm.assigned_to}
+                            onChange={(userId: number | null) => setEditForm({...editForm, assigned_to: userId})}
+                            className={styles.input}
+                          />
+                        </div>
+                        
                         <div className={styles.editActions}>
                           <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>
                             ✅ Sauvegarder
@@ -216,6 +268,20 @@ const TasksPage: React.FC = () => {
                           </span>
                         </div>
                         <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
+                        
+                        {task.assignedTo && (
+                          <div className={styles.assignmentInfo}>
+                            <span className={styles.assignmentLabel}>👤 Assigné à :</span>
+                            <span className={styles.assignmentName}>{task.assignedTo.name}</span>
+                            <span 
+                              className={styles.assignmentStatus}
+                              style={{ backgroundColor: getAssignmentStatusColor(task.assignment_status) }}
+                            >
+                              {getAssignmentStatusLabel(task.assignment_status)}
+                            </span>
+                          </div>
+                        )}
+                        
                         <div className={styles.taskActions}>
                           <select
                             value={task.status}
@@ -248,7 +314,7 @@ const TasksPage: React.FC = () => {
                         {estimation && (
                           <div className={styles.estimationResult}>
                             <div className={styles.estimationHeader}>
-                              <span className={styles.estimationTitle}> Résultat de l'estimation</span>
+                              <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
                               <span className={styles.estimationDate}>
                                 {new Date(estimation.created_at).toLocaleDateString('fr-FR')}
                               </span>

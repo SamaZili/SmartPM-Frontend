@@ -511,3 +511,50 @@
   color: #475569;
   transform: translateY(-1px);
 }
+/* ✅ ASSIGNATION STYLES */
+.assigneeSelect {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+.assigneeSelect:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.assignmentInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border-left: 4px solid #10b981;
+  border-radius: 4px;
+  margin: 0.75rem 0;
+}
+
+.assignmentLabel {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.assignmentName {
+  font-weight: 600;
+  color: #059669;
+}
+
+.assignmentStatus {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}

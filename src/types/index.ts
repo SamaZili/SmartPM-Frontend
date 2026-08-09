@@ -1,3 +1,7 @@
+// ========================================
+// INTERFACES DE BASE
+// ========================================
+
 export interface User {
   id: number;
   name: string;
@@ -27,6 +31,16 @@ export interface Estimation {
   updated_at: string;
 }
 
+// ✅ ASSIGNATION DES TÂCHES
+export type AssignmentStatus = 'pending' | 'accepted' | 'in_progress' | 'completed';
+
+export interface UserSimple {
+  id: number;
+  name: string;
+  email: string;
+  type: 'chef_de_projet' | 'developer';
+}
+
 export interface Task {
   id: number;
   project_id: number;
@@ -34,7 +48,10 @@ export interface Task {
   description?: string;
   status: 'a_faire' | 'en_cours' | 'terminee';
   complexity?: string;
-  estimation?: Estimation | null; // ✅ AJOUTÉ ICI : C'est ce qui corrige l'erreur TypeScript
+  estimation?: Estimation | null;
+  assigned_to?: number | null;              // ✅ AJOUTÉ
+  assignedTo?: UserSimple | null;           // ✅ AJOUTÉ (relation Eloquent)
+  assignment_status?: AssignmentStatus | null; // ✅ AJOUTÉ
   created_at: string;
   updated_at: string;
 }
@@ -51,33 +68,65 @@ export interface DashboardStats {
   };
 }
 
-// --- DTOs pour les API ---
-export interface LoginDto { email: string; password: string; }
-export interface RegisterDto { name: string; email: string; password: string; password_confirmation: string; type: string; }
-export interface ForgotPasswordDto { email: string; }
-export interface ResetPasswordDto { token: string; password: string; password_confirmation: string; }
-export interface UpdateProfileDto { name?: string; email?: string; current_password?: string; password?: string; password_confirmation?: string; }
-export interface CreateProjectDto { name: string; description?: string; status?: string; }
-export interface CreateTaskDto { name: string; description?: string; status?: string; complexity?: string; }
-export interface UpdateTaskStatusDto { status: string; }
+// ========================================
+// DTOs (Data Transfer Objects)
+// ========================================
+
+export interface LoginDto {
+  email: string;
+  password: string;
+}
+
+export interface RegisterDto {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  type: string;
+}
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface UpdateProfileDto {
+  name?: string;
+  email?: string;
+  current_password?: string;
+  password?: string;
+  password_confirmation?: string;
+}
+
+export interface CreateProjectDto {
+  name: string;
+  description?: string;
+  status?: string;
+}
+
+export interface CreateTaskDto {
+  name: string;
+  description?: string;
+  status?: string;
+  complexity?: string;
+  assigned_to?: number | null; // ✅ AJOUTÉ
+}
+
+export interface UpdateTaskStatusDto {
+  status: string;
+  assigned_to?: number | null;       // ✅ AJOUTÉ
+  assignment_status?: AssignmentStatus; // ✅ AJOUTÉ
+}
 
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
+  error_code?: string;
+  message_code?: string;
 }
-// ✅ ASSIGNATION
-export type AssignmentStatus = 'pending' | 'accepted' | 'in_progress' | 'completed';
-
-export interface UserSimple {
-  id: number;
-  name: string;
-  email: string;
-  type: 'chef_de_projet' | 'developer';
-}
-
-// Mise à jour de l'interface Task (ajoute ces 2 champs si pas déjà présents)
-// Dans ton interface Task existante, vérifie que tu as bien :
-//   assigned_to?: number | null;
-//   assignedTo?: UserSimple | null;
-//   assignment_status?: AssignmentStatus | null;
