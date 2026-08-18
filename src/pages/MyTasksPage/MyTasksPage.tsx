@@ -32,7 +32,6 @@ const MyTasksPage: React.FC = () => {
 
   const isDeveloper = user?.type === 'developer';
 
-  // ✅ D : Statistiques personnelles du développeur
   const stats = useMemo(() => ({
     total: tasks.length,
     pending: tasks.filter(t => t.assignment_status === 'pending').length,
@@ -114,7 +113,6 @@ const MyTasksPage: React.FC = () => {
           <div className={msgType === 'error' ? styles.errorAlert : styles.successAlert}>{message}</div>
         )}
 
-        {/* ✅ D : Stats personnelles */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <p className={styles.statValue}>{stats.total}</p>
@@ -134,7 +132,6 @@ const MyTasksPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ Filtres par statut d'assignation */}
         <div className={styles.filterChips}>
           {FILTERS.map((f) => (
             <button
