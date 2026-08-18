@@ -31,7 +31,11 @@ const MyTasksPage: React.FC = () => {
   const { message, type: msgType, showMessage } = useTemporaryMessage();
   const [filter, setFilter] = useState<AssignmentFilter>('toutes');
 
-  const isDeveloper = user?.type === 'developer';
+  // ✅ GARDE-FOU : Si ce n'est pas un développeur, rediriger vers Dashboard
+  if (user?.type !== 'developer') {
+    navigate('/dashboard');
+    return null;
+  }
 
   const stats = useMemo(() => ({
     total: tasks.length,
@@ -66,32 +70,23 @@ const MyTasksPage: React.FC = () => {
 
   const isOverdue = (task: Task) => {
     if (!task.due_date || task.assignment_status === 'completed') return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     return new Date(task.due_date) < today;
   };
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
   const userName = user?.name || 'Utilisateur';
-  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
 
   return (
     <div className={styles.pageContainer}>
       <NotificationBell />
-      
       <aside className={styles.sidebar}>
         <div className={styles.logoContainer}>
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
           <h1 className={styles.logoText}>SmartPM</h1>
         </div>
+        {/* ✅ Sidebar simplifiée pour développeur : UNIQUEMENT Mes Tâches + Profil */}
         <nav className={styles.navMenu}>
-          {!isDeveloper && (
-            <>
-              <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-              <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
-              <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
-            </>
-          )}
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>📥 Mes Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
@@ -99,22 +94,15 @@ const MyTasksPage: React.FC = () => {
           <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
             <p className={styles.userName}>{userName}</p>
-            <p className={styles.userRole}>{userRole}</p>
+            <p className={styles.userRole}>Développeur</p>
           </div>
-          <button
-            onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }}
-            className={styles.logoutBtn}
-          >
-            Déconnexion
-          </button>
+          <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </aside>
 
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>📥 Mes Tâches Assignées</h1>
-        {message && (
-          <div className={msgType === 'error' ? styles.errorAlert : styles.successAlert}>{message}</div>
-        )}
+        {message && <div className={msgType === 'error' ? styles.errorAlert : styles.successAlert}>{message}</div>}
 
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
@@ -137,11 +125,9 @@ const MyTasksPage: React.FC = () => {
 
         <div className={styles.filterChips}>
           {FILTERS.map((f) => (
-            <button
-              key={f.value}
+            <button key={f.value}
               className={`${styles.chip} ${filter === f.value ? styles.chipActive : ''}`}
-              onClick={() => setFilter(f.value)}
-            >
+              onClick={() => setFilter(f.value)}>
               {f.label}
             </button>
           ))}

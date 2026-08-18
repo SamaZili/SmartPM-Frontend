@@ -13,25 +13,18 @@ import styles from './TasksPage.module.css';
 
 type StatusFilter = 'tous' | 'a_faire' | 'en_cours' | 'terminee';
 
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: 'tous', label: 'Tous' },
-  { value: 'a_faire', label: 'À faire' },
-  { value: 'en_cours', label: 'En cours' },
-  { value: 'terminee', label: 'Terminée' },
+const STATUS_FILTERS: { value: StatusFilter; label: string; icon: string }[] = [
+  { value: 'tous', label: 'Toutes', icon: '📋' },
+  { value: 'a_faire', label: 'À faire', icon: '⏳' },
+  { value: 'en_cours', label: 'En cours', icon: '🔄' },
+  { value: 'terminee', label: 'Terminées', icon: '✅' },
 ];
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: '🟢 Basse',
-  medium: '🟡 Moyenne',
-  high: '🟠 Haute',
-  urgent: '🔴 Urgente',
+  low: '🟢 Basse', medium: '🟡 Moyenne', high: '🟠 Haute', urgent: '🔴 Urgente',
 };
-
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: '#10b981',
-  medium: '#f59e0b',
-  high: '#f97316',
-  urgent: '#ef4444',
+  low: '#10b981', medium: '#f59e0b', high: '#f97316', urgent: '#ef4444',
 };
 
 const TasksPage: React.FC = () => {
@@ -46,38 +39,42 @@ const TasksPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('tous');
 
   const [newTask, setNewTask] = useState({
-    name: '',
-    description: '',
-    status: 'a_faire',
-    assigned_to: null as number | null,
-    due_date: '',
-    priority: 'medium' as TaskPriority,
+    name: '', description: '', status: 'a_faire',
+    assigned_to: null as number | null, due_date: '', priority: 'medium' as TaskPriority,
   });
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    assigned_to: null as number | null,
-    due_date: '',
-    priority: 'medium' as TaskPriority,
+    name: '', description: '', assigned_to: null as number | null,
+    due_date: '', priority: 'medium' as TaskPriority,
   });
-
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
-
   const { message, showMessage } = useTemporaryMessage();
+
+  // ✅ Vue globale : toutes les tâches de tous les projets
+  const allTasks = useMemo(() => {
+    if (selectedProject) return tasks;
+    return projects.flatMap(p => []); // À remplacer par appel API global
+  }, [selectedProject, tasks, projects]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const matchStatus = statusFilter === 'tous' || t.status === statusFilter;
       const term = searchTerm.toLowerCase();
-      const matchSearch =
-        term === '' ||
+      const matchSearch = term === '' ||
         t.name.toLowerCase().includes(term) ||
         (t.description || '').toLowerCase().includes(term);
       return matchStatus && matchSearch;
     });
   }, [tasks, statusFilter, searchTerm]);
+
+  // ✅ Stats rapides
+  const stats = useMemo(() => ({
+    total: tasks.length,
+    a_faire: tasks.filter(t => t.status === 'a_faire').length,
+    en_cours: tasks.filter(t => t.status === 'en_cours').length,
+    terminee: tasks.filter(t => t.status === 'terminee').length,
+  }), [tasks]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,19 +84,14 @@ const TasksPage: React.FC = () => {
     }
     try {
       await addTask(selectedProject.id, {
-        name: newTask.name,
-        description: newTask.description || undefined,
-        status: newTask.status,
-        complexity: 'moyenne',
+        name: newTask.name, description: newTask.description || undefined,
+        status: newTask.status, complexity: 'moyenne',
         assigned_to: newTask.assigned_to,
-        due_date: newTask.due_date || null,
-        priority: newTask.priority,
+        due_date: newTask.due_date || null, priority: newTask.priority,
       });
       setNewTask({ name: '', description: '', status: 'a_faire', assigned_to: null, due_date: '', priority: 'medium' });
       showMessage('Tâche ajoutée avec succès !');
-    } catch {
-      showMessage('Erreur lors de l\'ajout.', 5000, 'error');
-    }
+    } catch { showMessage('Erreur lors de l\'ajout.', 5000, 'error'); }
   };
 
   const handleConfirmDelete = async () => {
@@ -107,17 +99,14 @@ const TasksPage: React.FC = () => {
     try {
       await removeTask(selectedProject.id, deleteTarget.id);
       showMessage('Tâche supprimée avec succès !');
-    } catch {
-      showMessage('Erreur lors de la suppression.', 3000, 'error');
-    }
+    } catch { showMessage('Erreur lors de la suppression.', 3000, 'error'); }
     setDeleteTarget(null);
   };
 
   const handleEditClick = (task: Task) => {
     setEditingTask(task);
     setEditForm({
-      name: task.name,
-      description: task.description || '',
+      name: task.name, description: task.description || '',
       assigned_to: task.assigned_to || null,
       due_date: task.due_date ? task.due_date.slice(0, 10) : '',
       priority: task.priority || 'medium',
@@ -125,22 +114,16 @@ const TasksPage: React.FC = () => {
   };
 
   const handleEditSave = async (taskId: number) => {
-    if (!editForm.name.trim()) {
-      showMessage('Le nom de la tâche est requis', 3000, 'error');
-      return;
-    }
+    if (!editForm.name.trim()) { showMessage('Le nom de la tâche est requis', 3000, 'error'); return; }
     try {
       if (!selectedProject) return;
       await updateTaskStatus(selectedProject.id, taskId, {
         status: tasks.find(t => t.id === taskId)?.status || 'a_faire',
-        ...editForm,
-        due_date: editForm.due_date || null,
+        ...editForm, due_date: editForm.due_date || null,
       });
       setEditingTask(null);
       showMessage('Tâche modifiée avec succès !');
-    } catch {
-      showMessage('Erreur lors de la modification.', 5000, 'error');
-    }
+    } catch { showMessage('Erreur lors de la modification.', 5000, 'error'); }
   };
 
   const handleEditCancel = () => {
@@ -149,29 +132,23 @@ const TasksPage: React.FC = () => {
   };
 
   const getEstimationForTask = (taskId: number) => estimations.find(e => e.task_id === taskId);
-
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = { a_faire: '#94a3b8', en_cours: '#f59e0b', terminee: '#10b981' };
     return colors[status] || '#64748b';
   };
-
   const getAssignmentStatusLabel = (status?: string | null) => {
     const labels: Record<string, string> = { pending: '⏳ En attente', accepted: '✅ Acceptée', in_progress: '🔄 En cours', completed: '🎉 Terminée' };
     return status ? labels[status] || status : 'Non assignée';
   };
-
   const getAssignmentStatusColor = (status?: string | null) => {
     const colors: Record<string, string> = { pending: '#f59e0b', accepted: '#3b82f6', in_progress: '#8b5cf6', completed: '#10b981' };
     return status ? colors[status] || '#64748b' : '#94a3b8';
   };
-
   const isOverdue = (task: Task) => {
     if (!task.due_date || task.status === 'terminee') return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     return new Date(task.due_date) < today;
   };
-
   const formatDueDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : null);
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
@@ -181,7 +158,6 @@ const TasksPage: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <NotificationBell />
-      
       <aside className={styles.sidebar}>
         <div className={styles.logoContainer}>
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
@@ -191,7 +167,7 @@ const TasksPage: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
-          <button onClick={() => navigate('/my-tasks')} className={styles.navButton}>📥 Mes Tâches</button>
+          {/* ✅ Pas de "Mes Tâches" pour le chef de projet */}
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>
@@ -200,18 +176,38 @@ const TasksPage: React.FC = () => {
             <p className={styles.userName}>{userName}</p>
             <p className={styles.userRole}>{userRole}</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>
-            Déconnexion
-          </button>
+          <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </aside>
 
       <main className={styles.mainContent}>
-        <h1 className={styles.pageTitle}>Gestion des Tâches</h1>
+        <h1 className={styles.pageTitle}>📋 Centre de Contrôle des Tâches</h1>
         {message && <div className={styles.alert}>{message}</div>}
 
+        {/* ✅ VUE GLOBALE : Stats rapides de toutes les tâches */}
+        {!selectedProject && (
+          <div className={styles.globalStatsGrid}>
+            <div className={styles.globalStatCard}>
+              <p className={styles.globalStatValue}>{stats.total}</p>
+              <p className={styles.globalStatLabel}>📋 Total</p>
+            </div>
+            <div className={styles.globalStatCard} style={{ borderLeftColor: '#94a3b8' }}>
+              <p className={styles.globalStatValue}>{stats.a_faire}</p>
+              <p className={styles.globalStatLabel}>⏳ À faire</p>
+            </div>
+            <div className={styles.globalStatCard} style={{ borderLeftColor: '#f59e0b' }}>
+              <p className={styles.globalStatValue}>{stats.en_cours}</p>
+              <p className={styles.globalStatLabel}>🔄 En cours</p>
+            </div>
+            <div className={styles.globalStatCard} style={{ borderLeftColor: '#10b981' }}>
+              <p className={styles.globalStatValue}>{stats.terminee}</p>
+              <p className={styles.globalStatLabel}>✅ Terminées</p>
+            </div>
+          </div>
+        )}
+
         <section className={styles.section}>
-          <h2>Sélectionnez un projet</h2>
+          <h2>{selectedProject ? `Tâches : ${selectedProject.name}` : '📁 Sélectionnez un projet'}</h2>
           <div className={styles.projectsGrid}>
             {projects.map((project: Project) => (
               <div
@@ -230,8 +226,6 @@ const TasksPage: React.FC = () => {
 
         {selectedProject && (
           <section className={styles.section}>
-            <h2>Tâches pour : <span className={styles.highlight}>{selectedProject.name}</span></h2>
-
             <div className={styles.toolbar}>
               <input
                 type="text"
@@ -247,26 +241,17 @@ const TasksPage: React.FC = () => {
                     className={`${styles.chip} ${statusFilter === f.value ? styles.chipActive : ''}`}
                     onClick={() => setStatusFilter(f.value)}
                   >
-                    {f.label}
+                    {f.icon} {f.label}
                   </button>
                 ))}
               </div>
             </div>
 
             <form onSubmit={handleAddTask} className={styles.taskForm}>
-              <input
-                type="text"
-                placeholder="Nom de la tâche..."
-                value={newTask.name}
-                onChange={(e) => setNewTask({...newTask, name: e.target.value})}
-                required
-              />
-              <textarea
-                placeholder="Description..."
-                value={newTask.description}
-                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                rows={2}
-              />
+              <input type="text" placeholder="Nom de la tâche..." value={newTask.name}
+                onChange={(e) => setNewTask({...newTask, name: e.target.value})} required />
+              <textarea placeholder="Description..." value={newTask.description}
+                onChange={(e) => setNewTask({...newTask, description: e.target.value})} rows={2} />
               <div className={styles.formRow}>
                 <select value={newTask.status} onChange={(e) => setNewTask({...newTask, status: e.target.value})}>
                   <option value="a_faire">À faire</option>
@@ -279,17 +264,11 @@ const TasksPage: React.FC = () => {
                   <option value="high">🟠 Priorité haute</option>
                   <option value="urgent">🔴 Urgente</option>
                 </select>
-                <input
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                />
+                <input type="date" value={newTask.due_date} onChange={(e) => setNewTask({...newTask, due_date: e.target.value})} />
               </div>
-              <AssigneeSelect
-                value={newTask.assigned_to}
+              <AssigneeSelect value={newTask.assigned_to}
                 onChange={(userId: number | null) => setNewTask({...newTask, assigned_to: userId})}
-                className={styles.assigneeSelect}
-              />
+                className={styles.assigneeSelect} />
               <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
@@ -297,7 +276,6 @@ const TasksPage: React.FC = () => {
               {filteredTasks.map((task: Task) => {
                 const estimation = getEstimationForTask(task.id);
                 const overdue = isOverdue(task);
-
                 return (
                   <div key={task.id} className={styles.taskCard}>
                     {editingTask?.id === task.id ? (
@@ -309,22 +287,15 @@ const TasksPage: React.FC = () => {
                         )}
                         <div className={styles.formGroup}>
                           <label>Nom de la tâche</label>
-                          <input
-                            type="text"
-                            value={editForm.name}
+                          <input type="text" value={editForm.name}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({...editForm, name: e.target.value})}
-                            className={styles.input}
-                            autoFocus
-                          />
+                            className={styles.input} autoFocus />
                         </div>
                         <div className={styles.formGroup}>
                           <label>Description</label>
-                          <textarea
-                            value={editForm.description}
+                          <textarea value={editForm.description}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({...editForm, description: e.target.value})}
-                            className={styles.textarea}
-                            rows={2}
-                          />
+                            className={styles.textarea} rows={2} />
                         </div>
                         <div className={styles.formRow}>
                           <div className={styles.formGroup}>
@@ -343,11 +314,9 @@ const TasksPage: React.FC = () => {
                         </div>
                         <div className={styles.formGroup}>
                           <label>Assigné à</label>
-                          <AssigneeSelect
-                            value={editForm.assigned_to}
+                          <AssigneeSelect value={editForm.assigned_to}
                             onChange={(userId: number | null) => setEditForm({...editForm, assigned_to: userId})}
-                            className={styles.input}
-                          />
+                            className={styles.input} />
                         </div>
                         <div className={styles.editActions}>
                           <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>✅ Sauvegarder</button>
@@ -363,7 +332,6 @@ const TasksPage: React.FC = () => {
                           </span>
                         </div>
                         <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
-
                         <div className={styles.badgesRow}>
                           <span className={styles.priorityBadge} style={{ backgroundColor: PRIORITY_COLORS[task.priority || 'medium'] }}>
                             {PRIORITY_LABELS[task.priority || 'medium']}
@@ -374,7 +342,6 @@ const TasksPage: React.FC = () => {
                             </span>
                           )}
                         </div>
-
                         {task.assignedTo && (
                           <div className={styles.assignmentInfo}>
                             <span className={styles.assignmentLabel}>👤 Assigné à :</span>
@@ -384,24 +351,17 @@ const TasksPage: React.FC = () => {
                             </span>
                           </div>
                         )}
-
                         <div className={styles.taskActions}>
-                          <select
-                            value={task.status}
+                          <select value={task.status}
                             onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })}
-                            className={styles.statusSelect}
-                          >
+                            className={styles.statusSelect}>
                             <option value="a_faire">À faire</option>
                             <option value="en_cours">En cours</option>
                             <option value="terminee">Terminée</option>
                           </select>
                           <button onClick={() => handleEditClick(task)} className={styles.editBtn} disabled={isEstimating}>✏️ Modifier</button>
-                          <button
-                            onClick={() => handleEstimate(task.id)}
-                            disabled={isEstimating || !!estimation}
-                            className={styles.aiBtn}
-                            style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                          >
+                          <button onClick={() => handleEstimate(task.id)} disabled={isEstimating || !!estimation}
+                            className={styles.aiBtn} style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
                             {isEstimating ? '⏳...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
                           </button>
                           <button onClick={() => setDeleteTarget(task)} className={styles.deleteBtn}>🗑️</button>
