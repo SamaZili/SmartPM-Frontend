@@ -8,6 +8,7 @@ import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { Project, Task, TaskPriority } from '../../types';
 import AssigneeSelect from '../../features/Tasks/components/AssigneeSelect';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import NotificationBell from '../../components/NotificationBell/NotificationBell';
 import styles from './TasksPage.module.css';
 
 type StatusFilter = 'tous' | 'a_faire' | 'en_cours' | 'terminee';
@@ -41,7 +42,6 @@ const TasksPage: React.FC = () => {
   const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
   const { estimations, isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
 
-  // ✅ A : Recherche + filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('tous');
 
@@ -63,12 +63,10 @@ const TasksPage: React.FC = () => {
     priority: 'medium' as TaskPriority,
   });
 
-  // ✅ B : Modale de confirmation (remplace window.confirm)
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
 
   const { message, showMessage } = useTemporaryMessage();
 
-  // ✅ A : filtrage en temps réel
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const matchStatus = statusFilter === 'tous' || t.status === statusFilter;
@@ -167,7 +165,6 @@ const TasksPage: React.FC = () => {
     return status ? colors[status] || '#64748b' : '#94a3b8';
   };
 
-  // ✅ C : deadline + retard
   const isOverdue = (task: Task) => {
     if (!task.due_date || task.status === 'terminee') return false;
     const today = new Date();
@@ -183,6 +180,8 @@ const TasksPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      <NotificationBell />
+      
       <aside className={styles.sidebar}>
         <div className={styles.logoContainer}>
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
@@ -233,7 +232,6 @@ const TasksPage: React.FC = () => {
           <section className={styles.section}>
             <h2>Tâches pour : <span className={styles.highlight}>{selectedProject.name}</span></h2>
 
-            {/* ✅ A : Barre de recherche + filtres par statut */}
             <div className={styles.toolbar}>
               <input
                 type="text"
@@ -366,7 +364,6 @@ const TasksPage: React.FC = () => {
                         </div>
                         <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
 
-                        {/* ✅ C : Badges priorité + deadline */}
                         <div className={styles.badgesRow}>
                           <span className={styles.priorityBadge} style={{ backgroundColor: PRIORITY_COLORS[task.priority || 'medium'] }}>
                             {PRIORITY_LABELS[task.priority || 'medium']}
@@ -440,7 +437,6 @@ const TasksPage: React.FC = () => {
         )}
       </main>
 
-      {/* ✅ B : Modale de confirmation professionnelle */}
       <ConfirmModal
         isOpen={deleteTarget !== null}
         title="Supprimer cette tâche ?"

@@ -9,6 +9,7 @@ import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { dashboardApi } from '../../features/Dashboard/api/dashboardApi';
 import { Project, Task } from '../../types';
+import NotificationBell from '../../components/NotificationBell/NotificationBell';
 import styles from './DashboardPage.module.css';
 
 const DashboardPage: React.FC = () => {
@@ -77,6 +78,8 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      <NotificationBell />
+      
       <aside className={styles.sidebar}>
         <div className={styles.logoContainer}>
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>

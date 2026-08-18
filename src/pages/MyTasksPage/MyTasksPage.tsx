@@ -4,6 +4,7 @@ import { useMyTasks, ActionStatus } from '../../features/Tasks/hooks/useMyTasks'
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
 import { Task, AssignmentStatus, TaskPriority } from '../../types';
+import NotificationBell from '../../components/NotificationBell/NotificationBell';
 import styles from './MyTasksPage.module.css';
 
 type AssignmentFilter = 'toutes' | AssignmentStatus;
@@ -76,6 +77,8 @@ const MyTasksPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      <NotificationBell />
+      
       <aside className={styles.sidebar}>
         <div className={styles.logoContainer}>
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>

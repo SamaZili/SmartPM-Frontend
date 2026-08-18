@@ -145,4 +145,13 @@ export interface ApiResponse<T> {
   message?: string;
   error_code?: string;
   message_code?: string;
+}// ✅ NOTIFICATIONS
+export interface AppNotification {
+  id: number;
+  user_id: number;
+  task_id?: number | null;
+  type: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
 }
