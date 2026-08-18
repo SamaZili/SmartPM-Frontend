@@ -1,19 +1,49 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMyTasks, ActionStatus } from '../../features/Tasks/hooks/useMyTasks';
 import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
-import { Task } from '../../types';
+import { Task, AssignmentStatus, TaskPriority } from '../../types';
 import styles from './MyTasksPage.module.css';
+
+type AssignmentFilter = 'toutes' | AssignmentStatus;
+
+const FILTERS: { value: AssignmentFilter; label: string }[] = [
+  { value: 'toutes', label: 'Toutes' },
+  { value: 'pending', label: '⏳ En attente' },
+  { value: 'accepted', label: '✅ Acceptées' },
+  { value: 'in_progress', label: '🔄 En cours' },
+  { value: 'completed', label: '🎉 Terminées' },
+];
+
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: '🟢 Basse', medium: '🟡 Moyenne', high: '🟠 Haute', urgent: '🔴 Urgente',
+};
+const PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: '#10b981', medium: '#f59e0b', high: '#f97316', urgent: '#ef4444',
+};
 
 const MyTasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tasks, isLoading, updateStatus } = useMyTasks();
   const { message, type: msgType, showMessage } = useTemporaryMessage();
+  const [filter, setFilter] = useState<AssignmentFilter>('toutes');
 
-  // ✅ Le développeur ne voit que l'essentiel (pas de superflu)
   const isDeveloper = user?.type === 'developer';
+
+  // ✅ D : Statistiques personnelles du développeur
+  const stats = useMemo(() => ({
+    total: tasks.length,
+    pending: tasks.filter(t => t.assignment_status === 'pending').length,
+    inProgress: tasks.filter(t => t.assignment_status === 'accepted' || t.assignment_status === 'in_progress').length,
+    completed: tasks.filter(t => t.assignment_status === 'completed').length,
+  }), [tasks]);
+
+  const filteredTasks = useMemo(
+    () => (filter === 'toutes' ? tasks : tasks.filter(t => t.assignment_status === filter)),
+    [tasks, filter]
+  );
 
   const handleStatusChange = async (taskId: number, status: ActionStatus) => {
     try {
@@ -25,23 +55,20 @@ const MyTasksPage: React.FC = () => {
   };
 
   const getStatusLabel = (status?: string | null) => {
-    const labels: Record<string, string> = {
-      pending: '⏳ En attente',
-      accepted: '✅ Acceptée',
-      in_progress: '🔄 En cours',
-      completed: '🎉 Terminée',
-    };
+    const labels: Record<string, string> = { pending: '⏳ En attente', accepted: '✅ Acceptée', in_progress: '🔄 En cours', completed: '🎉 Terminée' };
     return status ? labels[status] || status : '—';
   };
 
   const getStatusColor = (status?: string | null) => {
-    const colors: Record<string, string> = {
-      pending: '#f59e0b',
-      accepted: '#3b82f6',
-      in_progress: '#8b5cf6',
-      completed: '#10b981',
-    };
+    const colors: Record<string, string> = { pending: '#f59e0b', accepted: '#3b82f6', in_progress: '#8b5cf6', completed: '#10b981' };
     return status ? colors[status] || '#64748b' : '#94a3b8';
+  };
+
+  const isOverdue = (task: Task) => {
+    if (!task.due_date || task.assignment_status === 'completed') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(task.due_date) < today;
   };
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
@@ -55,8 +82,6 @@ const MyTasksPage: React.FC = () => {
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
           <h1 className={styles.logoText}>SmartPM</h1>
         </div>
-
-        {/* ✅ Navigation selon le rôle : le développeur ne voit que Mes Tâches + Profil */}
         <nav className={styles.navMenu}>
           {!isDeveloper && (
             <>
@@ -68,7 +93,6 @@ const MyTasksPage: React.FC = () => {
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>📥 Mes Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
-
         <div className={styles.userInfo}>
           <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
@@ -90,27 +114,68 @@ const MyTasksPage: React.FC = () => {
           <div className={msgType === 'error' ? styles.errorAlert : styles.successAlert}>{message}</div>
         )}
 
+        {/* ✅ D : Stats personnelles */}
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <p className={styles.statValue}>{stats.total}</p>
+            <p className={styles.statLabel}>Total assignées</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue} style={{ color: '#f59e0b' }}>{stats.pending}</p>
+            <p className={styles.statLabel}>En attente</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue} style={{ color: '#8b5cf6' }}>{stats.inProgress}</p>
+            <p className={styles.statLabel}>En cours</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statValue} style={{ color: '#10b981' }}>{stats.completed}</p>
+            <p className={styles.statLabel}>Terminées</p>
+          </div>
+        </div>
+
+        {/* ✅ Filtres par statut d'assignation */}
+        <div className={styles.filterChips}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              className={`${styles.chip} ${filter === f.value ? styles.chipActive : ''}`}
+              onClick={() => setFilter(f.value)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
           <div className={styles.emptyState}>⏳ Chargement de vos tâches...</div>
-        ) : tasks.length === 0 ? (
-          <div className={styles.emptyState}>Aucune tâche ne vous est assignée pour le moment.</div>
+        ) : filteredTasks.length === 0 ? (
+          <div className={styles.emptyState}>Aucune tâche ne correspond à ce filtre.</div>
         ) : (
           <div className={styles.tasksList}>
-            {tasks.map((task: Task) => (
+            {filteredTasks.map((task: Task) => (
               <div key={task.id} className={styles.taskCard}>
                 <div className={styles.taskHeader}>
                   <h4>{task.name}</h4>
-                  <span
-                    className={styles.assignmentBadge}
-                    style={{ backgroundColor: getStatusColor(task.assignment_status) }}
-                  >
+                  <span className={styles.assignmentBadge} style={{ backgroundColor: getStatusColor(task.assignment_status) }}>
                     {getStatusLabel(task.assignment_status)}
                   </span>
                 </div>
                 <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
                 {task.project && <p className={styles.projectInfo}>📁 Projet : {task.project.name}</p>}
 
-                {/* ✅ Bonus pro : estimation IA visible côté développeur */}
+                <div className={styles.badgesRow}>
+                  <span className={styles.priorityBadge} style={{ backgroundColor: PRIORITY_COLORS[task.priority || 'medium'] }}>
+                    {PRIORITY_LABELS[task.priority || 'medium']}
+                  </span>
+                  {task.due_date && (
+                    <span className={`${styles.dueBadge} ${isOverdue(task) ? styles.dueBadgeOverdue : ''}`}>
+                      {isOverdue(task) ? '⚠️ En retard — ' : '📅 '}
+                      {new Date(task.due_date).toLocaleDateString('fr-FR')}
+                    </span>
+                  )}
+                </div>
+
                 {task.estimation && (
                   <p className={styles.estimationInfo}>
                     🤖 Estimation IA : <strong>{task.estimation.predicted_effort} heures</strong>
@@ -119,19 +184,13 @@ const MyTasksPage: React.FC = () => {
 
                 <div className={styles.taskActions}>
                   {task.assignment_status === 'pending' && (
-                    <button onClick={() => handleStatusChange(task.id, 'accepted')} className={styles.acceptBtn}>
-                      ✅ Accepter la tâche
-                    </button>
+                    <button onClick={() => handleStatusChange(task.id, 'accepted')} className={styles.acceptBtn}>✅ Accepter la tâche</button>
                   )}
                   {task.assignment_status === 'accepted' && (
-                    <button onClick={() => handleStatusChange(task.id, 'in_progress')} className={styles.startBtn}>
-                      🔄 Commencer le travail
-                    </button>
+                    <button onClick={() => handleStatusChange(task.id, 'in_progress')} className={styles.startBtn}>🔄 Commencer le travail</button>
                   )}
                   {task.assignment_status === 'in_progress' && (
-                    <button onClick={() => handleStatusChange(task.id, 'completed')} className={styles.completeBtn}>
-                      🎉 Marquer comme terminée
-                    </button>
+                    <button onClick={() => handleStatusChange(task.id, 'completed')} className={styles.completeBtn}>🎉 Marquer comme terminée</button>
                   )}
                   {task.assignment_status === 'completed' && (
                     <span className={styles.doneLabel}>🏆 Tâche terminée, bravo !</span>

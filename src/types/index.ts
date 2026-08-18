@@ -37,6 +37,9 @@ export interface Estimation {
 // ✅ ASSIGNATION DES TÂCHES
 export type AssignmentStatus = 'pending' | 'accepted' | 'in_progress' | 'completed';
 
+// ✅ PRIORITÉS DES TÂCHES (Amélioration C)
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export interface UserSimple {
   id: number;
   name: string;
@@ -56,6 +59,9 @@ export interface Task {
   assignedTo?: UserSimple | null;
   assignment_status?: AssignmentStatus | null;
   project?: Project | null;
+  // ✅ NOUVEAUX CHAMPS : Deadline + Priorité (Amélioration C)
+  due_date?: string | null;
+  priority?: TaskPriority | null;
   created_at: string;
   updated_at: string;
 }
@@ -119,12 +125,18 @@ export interface CreateTaskDto {
   status?: string;
   complexity?: string;
   assigned_to?: number | null;
+  // ✅ NOUVEAUX CHAMPS (Amélioration C)
+  due_date?: string | null;
+  priority?: TaskPriority;
 }
 
 export interface UpdateTaskStatusDto {
   status: string;
   assigned_to?: number | null;
   assignment_status?: AssignmentStatus;
+  // ✅ NOUVEAUX CHAMPS (Amélioration C)
+  due_date?: string | null;
+  priority?: TaskPriority;
 }
 
 export interface ApiResponse<T> {
