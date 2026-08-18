@@ -4,32 +4,34 @@ import { useProjects } from '../../features/Projects/hooks/useProjects';
 import { useTasks } from '../../features/Tasks/hooks/useTasks';
 import { useEstimations } from '../../features/Dashboard/hooks/useEstimations';
 import { useTemporaryMessage } from '../../hooks/useTemporaryMessage';
+import { useAuth } from '../../features/Auth/hooks/useAuth';
 import { Project, Task } from '../../types';
 import AssigneeSelect from '../../features/Tasks/components/AssigneeSelect';
 import styles from './TasksPage.module.css';
 
 const TasksPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { tasks, addTask, updateTaskStatus, removeTask } = useTasks(selectedProject?.id || null);
-  
+
   const { estimations, isEstimating, handleEstimate } = useEstimations(selectedProject?.id || null, tasks);
-  
+
   const [newTask, setNewTask] = useState({
     name: '',
     description: '',
     status: 'a_faire',
     assigned_to: null as number | null,
   });
-  
+
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
     assigned_to: null as number | null,
   });
-  
+
   const { message, showMessage } = useTemporaryMessage();
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -48,8 +50,8 @@ const TasksPage: React.FC = () => {
       });
       setNewTask({ name: '', description: '', status: 'a_faire', assigned_to: null });
       showMessage('Tâche ajoutée avec succès !');
-    } catch (err: any) {
-      showMessage(err.message || 'Erreur', 5000, 'error');
+    } catch {
+      showMessage('Erreur lors de l\'ajout.', 5000, 'error');
     }
   };
 
@@ -59,8 +61,8 @@ const TasksPage: React.FC = () => {
       try {
         await removeTask(selectedProject.id, taskId);
         showMessage('Tâche supprimée avec succès !');
-      } catch (err: any) {
-        showMessage(err.message || 'Erreur lors de la suppression.', 3000, 'error');
+      } catch {
+        showMessage('Erreur lors de la suppression.', 3000, 'error');
       }
     }
   };
@@ -70,7 +72,7 @@ const TasksPage: React.FC = () => {
     setEditForm({
       name: task.name,
       description: task.description || '',
-      assigned_to: task.assigned_to || null,
+      assigned_to: task.assigned_to || null, // ✅ Dropdown pré-rempli
     });
   };
 
@@ -79,19 +81,16 @@ const TasksPage: React.FC = () => {
       showMessage('Le nom de la tâche est requis', 3000, 'error');
       return;
     }
-
     try {
       if (!selectedProject) return;
-      
       await updateTaskStatus(selectedProject.id, taskId, {
         status: tasks.find(t => t.id === taskId)?.status || 'a_faire',
         ...editForm,
       });
-      
       setEditingTask(null);
       showMessage('Tâche modifiée avec succès !');
-    } catch (err: any) {
-      showMessage(err.message || 'Erreur lors de la modification.', 5000, 'error');
+    } catch {
+      showMessage('Erreur lors de la modification.', 5000, 'error');
     }
   };
 
@@ -131,6 +130,10 @@ const TasksPage: React.FC = () => {
     return status ? colors[status] || '#64748b' : '#94a3b8';
   };
 
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  const userName = user?.name || 'Utilisateur';
+  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
+
   return (
     <div className={styles.pageContainer}>
       <aside className={styles.sidebar}>
@@ -146,12 +149,12 @@ const TasksPage: React.FC = () => {
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>AT</div>
+          <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
-            <p className={styles.userName}>Admin Test</p>
-            <p className={styles.userRole}>Chef de projet</p>
+            <p className={styles.userName}>{userName}</p>
+            <p className={styles.userRole}>{userRole}</p>
           </div>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className={styles.logoutBtn}>
+          <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>
             Déconnexion
           </button>
         </div>
@@ -204,24 +207,28 @@ const TasksPage: React.FC = () => {
                 <option value="en_cours">En cours</option>
                 <option value="terminee">Terminée</option>
               </select>
-              
               <AssigneeSelect
                 value={newTask.assigned_to}
                 onChange={(userId: number | null) => setNewTask({...newTask, assigned_to: userId})}
                 className={styles.assigneeSelect}
               />
-              
               <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
             <div className={styles.tasksList}>
               {tasks.map((task: Task) => {
                 const estimation = getEstimationForTask(task.id);
-                
+
                 return (
                   <div key={task.id} className={styles.taskCard}>
                     {editingTask?.id === task.id ? (
                       <div className={styles.editMode}>
+                        {/* ✅ NOUVEAU : banner professionnel "déjà assignée" */}
+                        {editingTask.assignedTo && (
+                          <div className={styles.alreadyAssigned}>
+                            ✅ Déjà assignée à : <strong>{editingTask.assignedTo.name}</strong> — {getAssignmentStatusLabel(editingTask.assignment_status)}
+                          </div>
+                        )}
                         <div className={styles.formGroup}>
                           <label>Nom de la tâche</label>
                           <input
@@ -241,7 +248,6 @@ const TasksPage: React.FC = () => {
                             rows={2}
                           />
                         </div>
-                        
                         <div className={styles.formGroup}>
                           <label>Assigné à</label>
                           <AssigneeSelect
@@ -250,7 +256,6 @@ const TasksPage: React.FC = () => {
                             className={styles.input}
                           />
                         </div>
-                        
                         <div className={styles.editActions}>
                           <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>
                             ✅ Sauvegarder
@@ -269,12 +274,12 @@ const TasksPage: React.FC = () => {
                           </span>
                         </div>
                         <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
-                        
+
                         {task.assignedTo && (
                           <div className={styles.assignmentInfo}>
                             <span className={styles.assignmentLabel}>👤 Assigné à :</span>
                             <span className={styles.assignmentName}>{task.assignedTo.name}</span>
-                            <span 
+                            <span
                               className={styles.assignmentStatus}
                               style={{ backgroundColor: getAssignmentStatusColor(task.assignment_status) }}
                             >
@@ -282,7 +287,7 @@ const TasksPage: React.FC = () => {
                             </span>
                           </div>
                         )}
-                        
+
                         <div className={styles.taskActions}>
                           <select
                             value={task.status}
@@ -293,11 +298,7 @@ const TasksPage: React.FC = () => {
                             <option value="en_cours">En cours</option>
                             <option value="terminee">Terminée</option>
                           </select>
-                          <button
-                            onClick={() => handleEditClick(task)}
-                            className={styles.editBtn}
-                            disabled={isEstimating}
-                          >
+                          <button onClick={() => handleEditClick(task)} className={styles.editBtn} disabled={isEstimating}>
                             ✏️ Modifier
                           </button>
                           <button

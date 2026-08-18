@@ -12,6 +12,9 @@ const MyTasksPage: React.FC = () => {
   const { tasks, isLoading, updateStatus } = useMyTasks();
   const { message, type: msgType, showMessage } = useTemporaryMessage();
 
+  // ✅ Le développeur ne voit que l'essentiel (pas de superflu)
+  const isDeveloper = user?.type === 'developer';
+
   const handleStatusChange = async (taskId: number, status: ActionStatus) => {
     try {
       await updateStatus(taskId, status);
@@ -52,13 +55,20 @@ const MyTasksPage: React.FC = () => {
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
           <h1 className={styles.logoText}>SmartPM</h1>
         </div>
+
+        {/* ✅ Navigation selon le rôle : le développeur ne voit que Mes Tâches + Profil */}
         <nav className={styles.navMenu}>
-          <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
-          <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
-          <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
+          {!isDeveloper && (
+            <>
+              <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
+              <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
+              <button onClick={() => navigate('/tasks')} className={styles.navButton}>✅ Tâches</button>
+            </>
+          )}
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>📥 Mes Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
+
         <div className={styles.userInfo}>
           <div className={styles.userAvatar}>{userInitial}</div>
           <div className={styles.userDetails}>
@@ -99,6 +109,13 @@ const MyTasksPage: React.FC = () => {
                 </div>
                 <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
                 {task.project && <p className={styles.projectInfo}>📁 Projet : {task.project.name}</p>}
+
+                {/* ✅ Bonus pro : estimation IA visible côté développeur */}
+                {task.estimation && (
+                  <p className={styles.estimationInfo}>
+                    🤖 Estimation IA : <strong>{task.estimation.predicted_effort} heures</strong>
+                  </p>
+                )}
 
                 <div className={styles.taskActions}>
                   {task.assignment_status === 'pending' && (
