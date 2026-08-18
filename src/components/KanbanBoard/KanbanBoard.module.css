@@ -1,0 +1,15 @@
+.kanbanGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.kanbanColumn { background: #f1f5f9; border-radius: 12px; border-top: 4px solid; display: flex; flex-direction: column; min-height: 320px; }
+.kanbanColumnActive { background: #e2e8f0; outline: 2px dashed #10b981; }
+.columnHeader { display: flex; justify-content: space-between; align-items: center; padding: 0.875rem 1rem; font-weight: 700; color: #1e293b; }
+.columnCount { background: white; border-radius: 12px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 700; color: #64748b; }
+.columnBody { padding: 0 0.75rem 0.75rem; display: flex; flex-direction: column; gap: 0.625rem; flex: 1; }
+.kanbanCard { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.875rem; cursor: grab; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); transition: all 0.15s; }
+.kanbanCard:hover { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); transform: translateY(-1px); }
+.kanbanCard:active { cursor: grabbing; }
+.cardTop { display: flex; align-items: center; gap: 0.5rem; }
+.cardTop h5 { margin: 0; font-size: 0.875rem; color: #1e293b; }
+.cardPriority { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cardAssignee, .cardDue { margin: 0.375rem 0 0; font-size: 0.75rem; color: #64748b; }
+.cardEstimation { margin: 0.375rem 0 0; font-size: 0.75rem; color: #7c3aed; font-weight: 600; }
+.columnEmpty { text-align: center; color: #94a3b8; font-size: 0.75rem; padding: 1rem 0; }

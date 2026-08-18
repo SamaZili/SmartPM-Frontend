@@ -9,9 +9,14 @@ import { Project, Task, TaskPriority } from '../../types';
 import AssigneeSelect from '../../features/Tasks/components/AssigneeSelect';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import NotificationBell from '../../components/NotificationBell/NotificationBell';
+import KanbanBoard from '../../components/KanbanBoard/KanbanBoard';
+import TaskCalendar from '../../components/TaskCalendar/TaskCalendar';
+import { exportTasksToPdf } from '../../features/Tasks/utils/exportTasksPdf';
 import styles from './TasksPage.module.css';
 
 type StatusFilter = 'tous' | 'a_faire' | 'en_cours' | 'terminee';
+type ViewMode = 'list' | 'kanban' | 'calendar';
+type TaskStatus = 'a_faire' | 'en_cours' | 'terminee';
 
 const STATUS_FILTERS: { value: StatusFilter; label: string; icon: string }[] = [
   { value: 'tous', label: 'Toutes', icon: '📋' },
@@ -37,6 +42,7 @@ const TasksPage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('tous');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   const [newTask, setNewTask] = useState({
     name: '', description: '', status: 'a_faire',
@@ -51,12 +57,6 @@ const TasksPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
   const { message, showMessage } = useTemporaryMessage();
 
-  // ✅ Vue globale : toutes les tâches de tous les projets
-  const allTasks = useMemo(() => {
-    if (selectedProject) return tasks;
-    return projects.flatMap(p => []); // À remplacer par appel API global
-  }, [selectedProject, tasks, projects]);
-
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const matchStatus = statusFilter === 'tous' || t.status === statusFilter;
@@ -67,14 +67,6 @@ const TasksPage: React.FC = () => {
       return matchStatus && matchSearch;
     });
   }, [tasks, statusFilter, searchTerm]);
-
-  // ✅ Stats rapides
-  const stats = useMemo(() => ({
-    total: tasks.length,
-    a_faire: tasks.filter(t => t.status === 'a_faire').length,
-    en_cours: tasks.filter(t => t.status === 'en_cours').length,
-    terminee: tasks.filter(t => t.status === 'terminee').length,
-  }), [tasks]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +84,15 @@ const TasksPage: React.FC = () => {
       setNewTask({ name: '', description: '', status: 'a_faire', assigned_to: null, due_date: '', priority: 'medium' });
       showMessage('Tâche ajoutée avec succès !');
     } catch { showMessage('Erreur lors de l\'ajout.', 5000, 'error'); }
+  };
+
+  // ✅ KANBAN : déplacer une tâche entre colonnes
+  const handleMoveTask = async (taskId: number, status: TaskStatus) => {
+    if (!selectedProject) return;
+    try {
+      await updateTaskStatus(selectedProject.id, taskId, { status });
+      showMessage('Tâche déplacée avec succès !');
+    } catch { showMessage('Erreur lors du déplacement.', 3000, 'error'); }
   };
 
   const handleConfirmDelete = async () => {
@@ -118,7 +119,7 @@ const TasksPage: React.FC = () => {
     try {
       if (!selectedProject) return;
       await updateTaskStatus(selectedProject.id, taskId, {
-        status: tasks.find(t => t.id === taskId)?.status || 'a_faire',
+        status: tasks.find((t) => t.id === taskId)?.status || 'a_faire',
         ...editForm, due_date: editForm.due_date || null,
       });
       setEditingTask(null);
@@ -131,7 +132,7 @@ const TasksPage: React.FC = () => {
     setEditForm({ name: '', description: '', assigned_to: null, due_date: '', priority: 'medium' });
   };
 
-  const getEstimationForTask = (taskId: number) => estimations.find(e => e.task_id === taskId);
+  const getEstimationForTask = (taskId: number) => estimations.find((e) => e.task_id === taskId);
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = { a_faire: '#94a3b8', en_cours: '#f59e0b', terminee: '#10b981' };
     return colors[status] || '#64748b';
@@ -167,7 +168,6 @@ const TasksPage: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} className={styles.navButton}>📊 Tableau de bord</button>
           <button onClick={() => navigate('/projects')} className={styles.navButton}>📁 Projets</button>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>✅ Tâches</button>
-          {/* ✅ Pas de "Mes Tâches" pour le chef de projet */}
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>
@@ -183,28 +183,6 @@ const TasksPage: React.FC = () => {
       <main className={styles.mainContent}>
         <h1 className={styles.pageTitle}>📋 Centre de Contrôle des Tâches</h1>
         {message && <div className={styles.alert}>{message}</div>}
-
-        {/* ✅ VUE GLOBALE : Stats rapides de toutes les tâches */}
-        {!selectedProject && (
-          <div className={styles.globalStatsGrid}>
-            <div className={styles.globalStatCard}>
-              <p className={styles.globalStatValue}>{stats.total}</p>
-              <p className={styles.globalStatLabel}>📋 Total</p>
-            </div>
-            <div className={styles.globalStatCard} style={{ borderLeftColor: '#94a3b8' }}>
-              <p className={styles.globalStatValue}>{stats.a_faire}</p>
-              <p className={styles.globalStatLabel}>⏳ À faire</p>
-            </div>
-            <div className={styles.globalStatCard} style={{ borderLeftColor: '#f59e0b' }}>
-              <p className={styles.globalStatValue}>{stats.en_cours}</p>
-              <p className={styles.globalStatLabel}>🔄 En cours</p>
-            </div>
-            <div className={styles.globalStatCard} style={{ borderLeftColor: '#10b981' }}>
-              <p className={styles.globalStatValue}>{stats.terminee}</p>
-              <p className={styles.globalStatLabel}>✅ Terminées</p>
-            </div>
-          </div>
-        )}
 
         <section className={styles.section}>
           <h2>{selectedProject ? `Tâches : ${selectedProject.name}` : '📁 Sélectionnez un projet'}</h2>
@@ -226,6 +204,18 @@ const TasksPage: React.FC = () => {
 
         {selectedProject && (
           <section className={styles.section}>
+            {/* ✅ Barre de vues : Liste / Kanban / Calendrier + Export PDF */}
+            <div className={styles.viewToolbar}>
+              <div className={styles.viewToggle}>
+                <button className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('list')}>📋 Liste</button>
+                <button className={`${styles.viewBtn} ${viewMode === 'kanban' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('kanban')}>🗂️ Kanban</button>
+                <button className={`${styles.viewBtn} ${viewMode === 'calendar' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('calendar')}>📅 Calendrier</button>
+              </div>
+              <button className={styles.exportBtn} onClick={() => exportTasksToPdf(selectedProject, filteredTasks)}>
+                📄 Export PDF
+              </button>
+            </div>
+
             <div className={styles.toolbar}>
               <input
                 type="text"
@@ -249,150 +239,163 @@ const TasksPage: React.FC = () => {
 
             <form onSubmit={handleAddTask} className={styles.taskForm}>
               <input type="text" placeholder="Nom de la tâche..." value={newTask.name}
-                onChange={(e) => setNewTask({...newTask, name: e.target.value})} required />
+                onChange={(e) => setNewTask({ ...newTask, name: e.target.value })} required />
               <textarea placeholder="Description..." value={newTask.description}
-                onChange={(e) => setNewTask({...newTask, description: e.target.value})} rows={2} />
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} rows={2} />
               <div className={styles.formRow}>
-                <select value={newTask.status} onChange={(e) => setNewTask({...newTask, status: e.target.value})}>
+                <select value={newTask.status} onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}>
                   <option value="a_faire">À faire</option>
                   <option value="en_cours">En cours</option>
                   <option value="terminee">Terminée</option>
                 </select>
-                <select value={newTask.priority} onChange={(e) => setNewTask({...newTask, priority: e.target.value as TaskPriority})}>
+                <select value={newTask.priority} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as TaskPriority })}>
                   <option value="low">🟢 Priorité basse</option>
                   <option value="medium">🟡 Priorité moyenne</option>
                   <option value="high">🟠 Priorité haute</option>
                   <option value="urgent">🔴 Urgente</option>
                 </select>
-                <input type="date" value={newTask.due_date} onChange={(e) => setNewTask({...newTask, due_date: e.target.value})} />
+                <input type="date" value={newTask.due_date} onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })} />
               </div>
               <AssigneeSelect value={newTask.assigned_to}
-                onChange={(userId: number | null) => setNewTask({...newTask, assigned_to: userId})}
+                onChange={(userId: number | null) => setNewTask({ ...newTask, assigned_to: userId })}
                 className={styles.assigneeSelect} />
               <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
-            <div className={styles.tasksList}>
-              {filteredTasks.map((task: Task) => {
-                const estimation = getEstimationForTask(task.id);
-                const overdue = isOverdue(task);
-                return (
-                  <div key={task.id} className={styles.taskCard}>
-                    {editingTask?.id === task.id ? (
-                      <div className={styles.editMode}>
-                        {editingTask.assignedTo && (
-                          <div className={styles.alreadyAssigned}>
-                            ✅ Déjà assignée à : <strong>{editingTask.assignedTo.name}</strong> — {getAssignmentStatusLabel(editingTask.assignment_status)}
-                          </div>
-                        )}
-                        <div className={styles.formGroup}>
-                          <label>Nom de la tâche</label>
-                          <input type="text" value={editForm.name}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({...editForm, name: e.target.value})}
-                            className={styles.input} autoFocus />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label>Description</label>
-                          <textarea value={editForm.description}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({...editForm, description: e.target.value})}
-                            className={styles.textarea} rows={2} />
-                        </div>
-                        <div className={styles.formRow}>
-                          <div className={styles.formGroup}>
-                            <label>Priorité</label>
-                            <select value={editForm.priority} onChange={(e) => setEditForm({...editForm, priority: e.target.value as TaskPriority})} className={styles.input}>
-                              <option value="low">🟢 Basse</option>
-                              <option value="medium">🟡 Moyenne</option>
-                              <option value="high">🟠 Haute</option>
-                              <option value="urgent">🔴 Urgente</option>
-                            </select>
-                          </div>
-                          <div className={styles.formGroup}>
-                            <label>Deadline</label>
-                            <input type="date" value={editForm.due_date} onChange={(e) => setEditForm({...editForm, due_date: e.target.value})} className={styles.input} />
-                          </div>
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label>Assigné à</label>
-                          <AssigneeSelect value={editForm.assigned_to}
-                            onChange={(userId: number | null) => setEditForm({...editForm, assigned_to: userId})}
-                            className={styles.input} />
-                        </div>
-                        <div className={styles.editActions}>
-                          <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>✅ Sauvegarder</button>
-                          <button onClick={handleEditCancel} className={styles.cancelBtn}>❌ Annuler</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className={styles.taskHeader}>
-                          <h4>{task.name}</h4>
-                          <span className={styles.taskStatus} style={{ backgroundColor: getStatusColor(task.status) }}>
-                            {task.status === 'a_faire' ? 'À faire' : task.status === 'en_cours' ? 'En cours' : 'Terminée'}
-                          </span>
-                        </div>
-                        <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
-                        <div className={styles.badgesRow}>
-                          <span className={styles.priorityBadge} style={{ backgroundColor: PRIORITY_COLORS[task.priority || 'medium'] }}>
-                            {PRIORITY_LABELS[task.priority || 'medium']}
-                          </span>
-                          {formatDueDate(task.due_date) && (
-                            <span className={`${styles.dueBadge} ${overdue ? styles.dueBadgeOverdue : ''}`}>
-                              {overdue ? '⚠️ En retard — ' : '📅 '} {formatDueDate(task.due_date)}
-                            </span>
+            {/* ✅ VUE LISTE */}
+            {viewMode === 'list' && (
+              <div className={styles.tasksList}>
+                {filteredTasks.map((task: Task) => {
+                  const estimation = getEstimationForTask(task.id);
+                  const overdue = isOverdue(task);
+                  return (
+                    <div key={task.id} className={styles.taskCard}>
+                      {editingTask?.id === task.id ? (
+                        <div className={styles.editMode}>
+                          {editingTask.assignedTo && (
+                            <div className={styles.alreadyAssigned}>
+                              ✅ Déjà assignée à : <strong>{editingTask.assignedTo.name}</strong> — {getAssignmentStatusLabel(editingTask.assignment_status)}
+                            </div>
                           )}
+                          <div className={styles.formGroup}>
+                            <label>Nom de la tâche</label>
+                            <input type="text" value={editForm.name}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, name: e.target.value })}
+                              className={styles.input} autoFocus />
+                          </div>
+                          <div className={styles.formGroup}>
+                            <label>Description</label>
+                            <textarea value={editForm.description}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({ ...editForm, description: e.target.value })}
+                              className={styles.textarea} rows={2} />
+                          </div>
+                          <div className={styles.formRow}>
+                            <div className={styles.formGroup}>
+                              <label>Priorité</label>
+                              <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as TaskPriority })} className={styles.input}>
+                                <option value="low">🟢 Basse</option>
+                                <option value="medium">🟡 Moyenne</option>
+                                <option value="high">🟠 Haute</option>
+                                <option value="urgent">🔴 Urgente</option>
+                              </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                              <label>Deadline</label>
+                              <input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} className={styles.input} />
+                            </div>
+                          </div>
+                          <div className={styles.formGroup}>
+                            <label>Assigné à</label>
+                            <AssigneeSelect value={editForm.assigned_to}
+                              onChange={(userId: number | null) => setEditForm({ ...editForm, assigned_to: userId })}
+                              className={styles.input} />
+                          </div>
+                          <div className={styles.editActions}>
+                            <button onClick={() => handleEditSave(task.id)} className={styles.saveBtn}>✅ Sauvegarder</button>
+                            <button onClick={handleEditCancel} className={styles.cancelBtn}>❌ Annuler</button>
+                          </div>
                         </div>
-                        {task.assignedTo && (
-                          <div className={styles.assignmentInfo}>
-                            <span className={styles.assignmentLabel}>👤 Assigné à :</span>
-                            <span className={styles.assignmentName}>{task.assignedTo.name}</span>
-                            <span className={styles.assignmentStatus} style={{ backgroundColor: getAssignmentStatusColor(task.assignment_status) }}>
-                              {getAssignmentStatusLabel(task.assignment_status)}
+                      ) : (
+                        <>
+                          <div className={styles.taskHeader}>
+                            <h4>{task.name}</h4>
+                            <span className={styles.taskStatus} style={{ backgroundColor: getStatusColor(task.status) }}>
+                              {task.status === 'a_faire' ? 'À faire' : task.status === 'en_cours' ? 'En cours' : 'Terminée'}
                             </span>
                           </div>
-                        )}
-                        <div className={styles.taskActions}>
-                          <select value={task.status}
-                            onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })}
-                            className={styles.statusSelect}>
-                            <option value="a_faire">À faire</option>
-                            <option value="en_cours">En cours</option>
-                            <option value="terminee">Terminée</option>
-                          </select>
-                          <button onClick={() => handleEditClick(task)} className={styles.editBtn} disabled={isEstimating}>✏️ Modifier</button>
-                          <button onClick={() => handleEstimate(task.id)} disabled={isEstimating || !!estimation}
-                            className={styles.aiBtn} style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
-                            {isEstimating ? '⏳...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
-                          </button>
-                          <button onClick={() => setDeleteTarget(task)} className={styles.deleteBtn}>🗑️</button>
-                        </div>
-                        {estimation && (
-                          <div className={styles.estimationResult}>
-                            <div className={styles.estimationHeader}>
-                              <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
-                              <span className={styles.estimationDate}>{new Date(estimation.created_at).toLocaleDateString('fr-FR')}</span>
-                            </div>
-                            <div className={styles.estimationGrid}>
-                              <div className={styles.estimationItem}>
-                                <span className={styles.estimationLabel}>Effort estimé</span>
-                                <span className={styles.estimationValue}>{estimation.predicted_effort} heures</span>
-                              </div>
-                              <div className={styles.estimationItem}>
-                                <span className={styles.estimationLabel}>Confiance IA</span>
-                                <span className={styles.estimationValue}>{Math.round(estimation.confidence_score * 100)}%</span>
-                              </div>
-                            </div>
+                          <p className={styles.taskDesc}>{task.description || 'Aucune description'}</p>
+                          <div className={styles.badgesRow}>
+                            <span className={styles.priorityBadge} style={{ backgroundColor: PRIORITY_COLORS[task.priority || 'medium'] }}>
+                              {PRIORITY_LABELS[task.priority || 'medium']}
+                            </span>
+                            {formatDueDate(task.due_date) && (
+                              <span className={`${styles.dueBadge} ${overdue ? styles.dueBadgeOverdue : ''}`}>
+                                {overdue ? '⚠️ En retard — ' : '📅 '} {formatDueDate(task.due_date)}
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-              {filteredTasks.length === 0 && (
-                <div className={styles.taskEmpty}>Aucune tâche ne correspond à votre recherche.</div>
-              )}
-            </div>
+                          {task.assignedTo && (
+                            <div className={styles.assignmentInfo}>
+                              <span className={styles.assignmentLabel}>👤 Assigné à :</span>
+                              <span className={styles.assignmentName}>{task.assignedTo.name}</span>
+                              <span className={styles.assignmentStatus} style={{ backgroundColor: getAssignmentStatusColor(task.assignment_status) }}>
+                                {getAssignmentStatusLabel(task.assignment_status)}
+                              </span>
+                            </div>
+                          )}
+                          <div className={styles.taskActions}>
+                            <select value={task.status}
+                              onChange={(e) => updateTaskStatus(selectedProject.id, task.id, { status: e.target.value })}
+                              className={styles.statusSelect}>
+                              <option value="a_faire">À faire</option>
+                              <option value="en_cours">En cours</option>
+                              <option value="terminee">Terminée</option>
+                            </select>
+                            <button onClick={() => handleEditClick(task)} className={styles.editBtn} disabled={isEstimating}>✏️ Modifier</button>
+                            <button onClick={() => handleEstimate(task.id)} disabled={isEstimating || !!estimation}
+                              className={styles.aiBtn} style={estimation ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
+                              {isEstimating ? '⏳...' : estimation ? '✅ Déjà estimée' : '🤖 Estimer via IA'}
+                            </button>
+                            <button onClick={() => setDeleteTarget(task)} className={styles.deleteBtn}>🗑️</button>
+                          </div>
+                          {estimation && (
+                            <div className={styles.estimationResult}>
+                              <div className={styles.estimationHeader}>
+                                <span className={styles.estimationTitle}>📊 Résultat de l'estimation</span>
+                                <span className={styles.estimationDate}>{new Date(estimation.created_at).toLocaleDateString('fr-FR')}</span>
+                              </div>
+                              <div className={styles.estimationGrid}>
+                                <div className={styles.estimationItem}>
+                                  <span className={styles.estimationLabel}>Effort estimé</span>
+                                  <span className={styles.estimationValue}>{estimation.predicted_effort} heures</span>
+                                </div>
+                                <div className={styles.estimationItem}>
+                                  <span className={styles.estimationLabel}>Confiance IA</span>
+                                  <span className={styles.estimationValue}>{Math.round(estimation.confidence_score * 100)}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                {filteredTasks.length === 0 && (
+                  <div className={styles.taskEmpty}>Aucune tâche ne correspond à votre recherche.</div>
+                )}
+              </div>
+            )}
+
+            {/* ✅ VUE KANBAN */}
+            {viewMode === 'kanban' && (
+              <KanbanBoard tasks={filteredTasks} onMoveTask={handleMoveTask} />
+            )}
+
+            {/* ✅ VUE CALENDRIER */}
+            {viewMode === 'calendar' && (
+              <TaskCalendar tasks={filteredTasks} />
+            )}
           </section>
         )}
       </main>
