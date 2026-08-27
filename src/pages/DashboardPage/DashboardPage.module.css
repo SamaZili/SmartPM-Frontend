@@ -731,3 +731,12 @@
 .createProjectBtn:hover {
   background-color: #2563eb;
 }
+/* ===== V2 : boutons plats, badges soft, icônes flat ===== */
+.projectForm button { background: var(--primary, #10b981); }
+.projectForm button:hover { background: var(--primary-dark, #059669); box-shadow: none; }
+.projectCardBadge { background-color: var(--primary-100, #dcfce7); color: var(--primary-700, #166534); }
+.taskForm button { background: var(--secondary, #3b82f6); }
+.taskForm button:hover { background: #2563eb; box-shadow: none; }
+.estimateButton { background: var(--accent, #7c3aed); box-shadow: none; }
+.estimateButton:hover:not(:disabled) { background: var(--accent-700, #6d28d9); transform: translateY(-1px); box-shadow: none; }
+.recentProjectIcon { background: var(--primary, #10b981); }

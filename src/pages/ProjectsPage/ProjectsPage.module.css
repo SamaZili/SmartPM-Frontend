@@ -569,3 +569,7 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
 }
+/* ===== V2 : bouton plat, icône flat ===== */
+.projectCardIcon { background: var(--primary, #10b981); }
+.primaryBtn { background: var(--primary, #10b981); }
+.primaryBtn:hover { background: var(--primary-dark, #059669); box-shadow: none; }

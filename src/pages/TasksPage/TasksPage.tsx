@@ -28,8 +28,13 @@ const STATUS_FILTERS: { value: StatusFilter; label: string; icon: string }[] = [
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: '🟢 Basse', medium: '🟡 Moyenne', high: '🟠 Haute', urgent: '🔴 Urgente',
 };
+
+// ✅ DESIGN V2 : badges "soft" (fond pastel + texte foncé, style Linear/Notion)
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: '#10b981', medium: '#f59e0b', high: '#f97316', urgent: '#ef4444',
+  low: '#d1fae5',      // vert pastel
+  medium: '#fef3c7',   // jaune pastel
+  high: '#ffedd5',     // orange pastel
+  urgent: '#fee2e2',   // rouge pastel
 };
 
 const TasksPage: React.FC = () => {
@@ -86,7 +91,6 @@ const TasksPage: React.FC = () => {
     } catch { showMessage('Erreur lors de l\'ajout.', 5000, 'error'); }
   };
 
-  // ✅ KANBAN : déplacer une tâche entre colonnes
   const handleMoveTask = async (taskId: number, status: TaskStatus) => {
     if (!selectedProject) return;
     try {
@@ -133,28 +137,45 @@ const TasksPage: React.FC = () => {
   };
 
   const getEstimationForTask = (taskId: number) => estimations.find((e) => e.task_id === taskId);
+
+  // ✅ DESIGN V2 : couleurs pastel pour les badges soft
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = { a_faire: '#94a3b8', en_cours: '#f59e0b', terminee: '#10b981' };
-    return colors[status] || '#64748b';
+    const colors: Record<string, string> = {
+      a_faire: '#f1f5f9',    // gris pastel
+      en_cours: '#fef3c7',   // jaune pastel
+      terminee: '#d1fae5',   // vert pastel
+    };
+    return colors[status] || '#f1f5f9';
   };
+
   const getAssignmentStatusLabel = (status?: string | null) => {
-    const labels: Record<string, string> = { pending: '⏳ En attente', accepted: '✅ Acceptée', in_progress: '🔄 En cours', completed: '🎉 Terminée' };
+    const labels: Record<string, string> = {
+      pending: '⏳ En attente',
+      accepted: '✅ Acceptée',
+      in_progress: '🔄 En cours',
+      completed: '🎉 Terminée',
+    };
     return status ? labels[status] || status : 'Non assignée';
   };
+
+  // ✅ DESIGN V2 : couleurs pastel pour les badges d'assignation
   const getAssignmentStatusColor = (status?: string | null) => {
-    const colors: Record<string, string> = { pending: '#f59e0b', accepted: '#3b82f6', in_progress: '#8b5cf6', completed: '#10b981' };
-    return status ? colors[status] || '#64748b' : '#94a3b8';
+    const colors: Record<string, string> = {
+      pending: '#fef3c7',     // jaune pastel
+      accepted: '#dbeafe',    // bleu pastel
+      in_progress: '#ede9fe', // violet pastel
+      completed: '#d1fae5',   // vert pastel
+    };
+    return status ? colors[status] || '#f1f5f9' : '#f1f5f9';
   };
+
   const isOverdue = (task: Task) => {
     if (!task.due_date || task.status === 'terminee') return false;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     return new Date(task.due_date) < today;
   };
-  const formatDueDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : null);
 
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-  const userName = user?.name || 'Utilisateur';
-  const userRole = user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur';
+  const formatDueDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : null);
 
   return (
     <div className={styles.pageContainer}>
@@ -171,10 +192,10 @@ const TasksPage: React.FC = () => {
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
         </nav>
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>{userInitial}</div>
+          <div className={styles.userAvatar}>{user?.name?.charAt(0).toUpperCase() || '?'}</div>
           <div className={styles.userDetails}>
-            <p className={styles.userName}>{userName}</p>
-            <p className={styles.userRole}>{userRole}</p>
+            <p className={styles.userName}>{user?.name || 'Utilisateur'}</p>
+            <p className={styles.userRole}>{user?.type === 'chef_de_projet' ? 'Chef de projet' : 'Développeur'}</p>
           </div>
           <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); }} className={styles.logoutBtn}>Déconnexion</button>
         </div>
@@ -204,7 +225,6 @@ const TasksPage: React.FC = () => {
 
         {selectedProject && (
           <section className={styles.section}>
-            {/* ✅ Barre de vues : Liste / Kanban / Calendrier + Export PDF */}
             <div className={styles.viewToolbar}>
               <div className={styles.viewToggle}>
                 <button className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('list')}>📋 Liste</button>
@@ -262,7 +282,6 @@ const TasksPage: React.FC = () => {
               <button type="submit" className={styles.primaryBtn}>+ Ajouter une tâche</button>
             </form>
 
-            {/* ✅ VUE LISTE */}
             {viewMode === 'list' && (
               <div className={styles.tasksList}>
                 {filteredTasks.map((task: Task) => {
@@ -387,12 +406,10 @@ const TasksPage: React.FC = () => {
               </div>
             )}
 
-            {/* ✅ VUE KANBAN */}
             {viewMode === 'kanban' && (
               <KanbanBoard tasks={filteredTasks} onMoveTask={handleMoveTask} />
             )}
 
-            {/* ✅ VUE CALENDRIER */}
             {viewMode === 'calendar' && (
               <TaskCalendar tasks={filteredTasks} />
             )}

@@ -20,8 +20,13 @@ const FILTERS: { value: AssignmentFilter; label: string }[] = [
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: '🟢 Basse', medium: '🟡 Moyenne', high: '🟠 Haute', urgent: '🔴 Urgente',
 };
+
+// ✅ DESIGN V2 : badges "soft" (fond pastel + texte foncé)
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: '#10b981', medium: '#f59e0b', high: '#f97316', urgent: '#ef4444',
+  low: '#d1fae5',      // vert pastel
+  medium: '#fef3c7',   // jaune pastel
+  high: '#ffedd5',     // orange pastel
+  urgent: '#fee2e2',   // rouge pastel
 };
 
 const MyTasksPage: React.FC = () => {
@@ -59,13 +64,24 @@ const MyTasksPage: React.FC = () => {
   };
 
   const getStatusLabel = (status?: string | null) => {
-    const labels: Record<string, string> = { pending: '⏳ En attente', accepted: '✅ Acceptée', in_progress: '🔄 En cours', completed: '🎉 Terminée' };
+    const labels: Record<string, string> = {
+      pending: '⏳ En attente',
+      accepted: '✅ Acceptée',
+      in_progress: '🔄 En cours',
+      completed: '🎉 Terminée',
+    };
     return status ? labels[status] || status : '—';
   };
 
+  // ✅ DESIGN V2 : couleurs pastel pour les badges d'assignation
   const getStatusColor = (status?: string | null) => {
-    const colors: Record<string, string> = { pending: '#f59e0b', accepted: '#3b82f6', in_progress: '#8b5cf6', completed: '#10b981' };
-    return status ? colors[status] || '#64748b' : '#94a3b8';
+    const colors: Record<string, string> = {
+      pending: '#fef3c7',     // jaune pastel
+      accepted: '#dbeafe',    // bleu pastel
+      in_progress: '#ede9fe', // violet pastel
+      completed: '#d1fae5',   // vert pastel
+    };
+    return status ? colors[status] || '#f1f5f9' : '#f1f5f9';
   };
 
   const isOverdue = (task: Task) => {
@@ -85,7 +101,6 @@ const MyTasksPage: React.FC = () => {
           <div className={styles.logoIcon}><span className={styles.logoLetter}>S</span></div>
           <h1 className={styles.logoText}>SmartPM</h1>
         </div>
-        {/* ✅ Sidebar simplifiée pour développeur : UNIQUEMENT Mes Tâches + Profil */}
         <nav className={styles.navMenu}>
           <button className={`${styles.navButton} ${styles.navButtonActive}`}>📥 Mes Tâches</button>
           <button onClick={() => navigate('/profile')} className={styles.navButton}>👤 Profil</button>
